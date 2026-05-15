@@ -21,7 +21,6 @@ public struct MinecraftFriendsAPIConfiguration: Sendable {
     public static let production = MinecraftFriendsAPIConfiguration(
         friendsListURL: URL(string: "https://api.minecraftservices.com/friends")!,
         presenceURL: URL(string: "https://api.minecraftservices.com/presence")!,
-        playerAttributesURL: URL(string: "https://api.minecraftservices.com/player/attributes")!,
-        mojangSessionProfileBaseURL: URL(string: "https://sessionserver.mojang.com/session/minecraft/profile/")!
+        playerAttributesURL: URL(string: "https://api.minecraftservices.com/player/attributes")!
     )
 }

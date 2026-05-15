@@ -38,15 +38,12 @@ public final class MinecraftFriendsService: @unchecked Sendable {
     }
 
     public func performFriendAction(accessToken: String, request: MinecraftFriendActionRequest) async throws -> MinecraftFriendsListResponse {
-        let urlRequest = Self.authenticatedJSONRequest(
+        let data = try await authorizedJSONData(
             url: configuration.friendsListURL,
             method: "PUT",
             accessToken: accessToken,
             body: try jsonEncoder.encode(request)
         )
-        let (data, http) = try await httpClient.performRequestWithResponse(request: urlRequest)
-        try Self.throwIfFailedResponse(http: http, data: data)
-
         let lists = try jsonDecoder.decode(MinecraftFriendsListResponse.self, from: data)
         await coordinator.applyPutFriendsSuccess(lists: lists)
         return lists
@@ -63,14 +60,12 @@ public final class MinecraftFriendsService: @unchecked Sendable {
                 acceptInvites: enableFriendInvites ? .enabled : .disabled
             )
         )
-        let urlRequest = Self.authenticatedJSONRequest(
+        _ = try await authorizedJSONData(
             url: configuration.playerAttributesURL,
             method: "POST",
             accessToken: accessToken,
             body: try jsonEncoder.encode(body)
         )
-        let (data, http) = try await httpClient.performRequestWithResponse(request: urlRequest)
-        try Self.throwIfFailedResponse(http: http, data: data)
         markPresenceRefreshSoon()
     }
 
@@ -83,15 +78,13 @@ public final class MinecraftFriendsService: @unchecked Sendable {
     }
 
     public func fetchFriendAccountPreferences(accessToken: String) async throws -> MinecraftFriendsPreferencesPayload {
-        let urlRequest = Self.authenticatedJSONRequest(
+        let data = try await authorizedJSONData(
             url: configuration.playerAttributesURL,
             method: "GET",
             accessToken: accessToken,
             body: nil
         )
-        let (data, http) = try await httpClient.performRequestWithResponse(request: urlRequest)
-        try Self.throwIfFailedResponse(http: http, data: data)
-        guard let parsed = Self.extractFriendsPreferencesPayload(from: data) else {
+        guard let parsed = extractFriendsPreferencesPayload(from: data) else {
             throw MinecraftFriendsServiceError.validation(
                 message: "无法解析账号好友偏好设置",
                 i18nKey: "minecraft.friends.settings.parse_failed",
@@ -121,7 +114,7 @@ public final class MinecraftFriendsService: @unchecked Sendable {
             let lists = try jsonDecoder.decode(MinecraftFriendsListResponse.self, from: data)
             return (lists, code, Self.etag(from: http))
         }
-        return try Self.throwingFriendsGETFailure(http: http, data: data, code: code)
+        try Self.throwIfFailedResponseUnreachable(http: http, data: data)
     }
 
     func executePostPresence(accessToken: String, ifNoneMatch: String?, body: Data) async throws -> (
@@ -145,43 +138,29 @@ public final class MinecraftFriendsService: @unchecked Sendable {
             let pr = try jsonDecoder.decode(MinecraftPresenceResponse.self, from: data)
             return (pr, code, Self.etag(from: http))
         }
-        return try Self.throwingPresencePOSTFailure(http: http, data: data, code: code)
+        try Self.throwIfFailedResponseUnreachable(http: http, data: data)
     }
 
-    private static func throwingFriendsGETFailure(http: HTTPURLResponse, data: Data, code: Int) throws -> (
-        lists: MinecraftFriendsListResponse,
-        status: Int,
-        etag: String?
-    ) {
-        try throwIfFailedResponse(http: http, data: data)
-        throw MinecraftFriendsServiceError.network(
-            message: "好友接口返回未处理的 HTTP \(code)",
-            i18nKey: "error.network.api_request_failed",
-            level: .notification
+    private func authorizedJSONData(
+        url: URL,
+        method: String,
+        accessToken: String,
+        body: Data? = nil,
+        ifNoneMatch: String? = nil
+    ) async throws -> Data {
+        let urlRequest = Self.authenticatedJSONRequest(
+            url: url,
+            method: method,
+            accessToken: accessToken,
+            body: body,
+            ifNoneMatch: ifNoneMatch
         )
+        let (data, http) = try await httpClient.performRequestWithResponse(request: urlRequest)
+        try Self.throwIfFailedResponse(http: http, data: data)
+        return data
     }
 
-    private static func throwingPresencePOSTFailure(http: HTTPURLResponse, data: Data, code: Int) throws -> (
-        presence: MinecraftPresenceResponse,
-        status: Int,
-        etag: String?
-    ) {
-        try throwIfFailedResponse(http: http, data: data)
-        throw MinecraftFriendsServiceError.network(
-            message: "Presence 接口返回未处理的 HTTP \(code)",
-            i18nKey: "error.network.api_request_failed",
-            level: .notification
-        )
-    }
-
-    private enum Mime {
-        static let json = "application/json"
-    }
-
-    private enum Header {
-        static let accept = "Accept"
-        static let contentType = "Content-Type"
-    }
+    private static let jsonMIMEType = "application/json"
 
     private static func authenticatedJSONRequest(
         url: URL,
@@ -193,9 +172,9 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         var r = URLRequest(url: url)
         r.httpMethod = method
         r.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        r.setValue(Mime.json, forHTTPHeaderField: Header.accept)
+        r.setValue(jsonMIMEType, forHTTPHeaderField: "Accept")
         if let body {
-            r.setValue(Mime.json, forHTTPHeaderField: Header.contentType)
+            r.setValue(jsonMIMEType, forHTTPHeaderField: "Content-Type")
             r.httpBody = body
         }
         if let ifNoneMatch, !ifNoneMatch.isEmpty {
@@ -205,8 +184,13 @@ public final class MinecraftFriendsService: @unchecked Sendable {
     }
 
     private static func etag(from response: HTTPURLResponse) -> String? {
-        if let v = response.value(forHTTPHeaderField: "ETag") { return v }
-        return response.value(forHTTPHeaderField: "Etag")
+        response.value(forHTTPHeaderField: "ETag") ?? response.value(forHTTPHeaderField: "Etag")
+    }
+
+    /// Satisfies the type checker for branches where `throwIfFailedResponse` always throws (non-2xx).
+    private static func throwIfFailedResponseUnreachable(http: HTTPURLResponse, data: Data) throws -> Never {
+        try throwIfFailedResponse(http: http, data: data)
+        fatalError("Unreachable: throwIfFailedResponse maps all non-2xx responses to errors")
     }
 
     private static func throwIfFailedResponse(http: HTTPURLResponse, data: Data) throws {
@@ -264,12 +248,11 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         }
     }
 
-    private static func extractFriendsPreferencesPayload(from data: Data) -> MinecraftFriendsPreferencesPayload? {
-        if let env = try? JSONDecoder().decode(MinecraftPlayerAttributesGETEnvelope.self, from: data) {
-            if let fp = env.friendsPreferences { return fp }
-            if let fp = env.preferences?.friendsPreferences { return fp }
+    private func extractFriendsPreferencesPayload(from data: Data) -> MinecraftFriendsPreferencesPayload? {
+        if let env = try? jsonDecoder.decode(MinecraftPlayerAttributesGETEnvelope.self, from: data) {
+            return env.friendsPreferences ?? env.preferences?.friendsPreferences
         }
-        return extractFriendsPreferencesPayloadLegacy(from: data)
+        return Self.extractFriendsPreferencesPayloadLegacy(from: data)
     }
 
     private static func extractFriendsPreferencesPayloadLegacy(from data: Data) -> MinecraftFriendsPreferencesPayload? {

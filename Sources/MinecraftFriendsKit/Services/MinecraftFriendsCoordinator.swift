@@ -49,9 +49,8 @@ actor MinecraftFriendsCoordinator {
             try await self.fetchBundleInner(accessToken: accessToken, forceRefresh: forceRefresh, service: service)
         }
         inflight = task
-        let value = try await task.value
-        inflight = nil
-        return value
+        defer { inflight = nil }
+        return try await task.value
     }
 
     private func fetchBundleInner(accessToken: String, forceRefresh: Bool, service: MinecraftFriendsService) async throws -> MinecraftFriendsUIData {
