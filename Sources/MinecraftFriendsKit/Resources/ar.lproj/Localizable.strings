@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "دعاك للانضمام إلى عالمه";
 "minecraft.friends.request.incoming_hint" = "أرسل لك طلب صداقة";
+"minecraft.friends.request.accepted_hint" = "قبل طلب الصداقة الخاص بك";
 "minecraft.friends.presence.offline" = "غير متصل";
 "minecraft.friends.presence.online" = "متصل";
+"minecraft.friends.presence.online.notification" = "أصبح متصلاً";
+"minecraft.friends.presence.offline.notification" = "أصبح غير متصل";
 "minecraft.friends.presence.playing_hosted_server" = "استضافة شبكة محلية";
 "minecraft.friends.presence.playing_offline" = "لاعب فردي";
 "minecraft.friends.presence.playing_realms" = "Realms";

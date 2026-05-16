@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "找不到该玩家名称或档案";
 "minecraft.friends.invite.invited_hint" = "邀请你加入其世界";
 "minecraft.friends.request.incoming_hint" = "向你发送了好友申请";
+"minecraft.friends.request.accepted_hint" = "已接受你的好友申请";
 "minecraft.friends.presence.offline" = "离线";
 "minecraft.friends.presence.online" = "在线";
+"minecraft.friends.presence.online.notification" = "上线了";
+"minecraft.friends.presence.offline.notification" = "下线了";
 "minecraft.friends.presence.playing_hosted_server" = "开放局域网";
 "minecraft.friends.presence.playing_offline" = "单人游戏";
 "minecraft.friends.presence.playing_realms" = "Realms";

@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "Kutsui sinut liittymään maailmaansa";
 "minecraft.friends.request.incoming_hint" = "Lähetti sinulle kaveripyynnön";
+"minecraft.friends.request.accepted_hint" = "Hyväksyi kaveripyyntösi";
 "minecraft.friends.presence.offline" = "Offline";
 "minecraft.friends.presence.online" = "Online";
+"minecraft.friends.presence.online.notification" = "Tuli online-tilaan";
+"minecraft.friends.presence.offline.notification" = "Men offline-tilaan";
 "minecraft.friends.presence.playing_hosted_server" = "Isännöi lähiverkkoa";
 "minecraft.friends.presence.playing_offline" = "Yksinpeli";
 "minecraft.friends.presence.playing_realms" = "Realms";

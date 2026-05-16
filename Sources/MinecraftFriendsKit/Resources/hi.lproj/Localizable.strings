@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "अपनी दुनिया में शामिल होने के लिए आमंत्रित किया";
 "minecraft.friends.request.incoming_hint" = "ने आपको मित्र अनुरोध भेजा";
+"minecraft.friends.request.accepted_hint" = "ने आपका मित्र अनुरोध स्वीकार कर लिया";
 "minecraft.friends.presence.offline" = "ऑफ़लाइन";
 "minecraft.friends.presence.online" = "ऑनलाइन";
+"minecraft.friends.presence.online.notification" = "ऑनलाइन हो गया";
+"minecraft.friends.presence.offline.notification" = "ऑफ़लाइन हो गया";
 "minecraft.friends.presence.playing_hosted_server" = "LAN होस्ट कर रहे हैं";
 "minecraft.friends.presence.playing_offline" = "एकल खिलाड़ी";
 "minecraft.friends.presence.playing_realms" = "Realms";

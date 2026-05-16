@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "Dünyasına katılmaya davet etti";
 "minecraft.friends.request.incoming_hint" = "Sana arkadaşlık isteği gönderdi";
+"minecraft.friends.request.accepted_hint" = "Arkadaşlık isteğini kabul etti";
 "minecraft.friends.presence.offline" = "Çevrimdışı";
 "minecraft.friends.presence.online" = "Çevrimiçi";
+"minecraft.friends.presence.online.notification" = "Çevrimiçi oldu";
+"minecraft.friends.presence.offline.notification" = "Çevrimdışı oldu";
 "minecraft.friends.presence.playing_hosted_server" = "LAN sunucusu";
 "minecraft.friends.presence.playing_offline" = "Tek oyuncu";
 "minecraft.friends.presence.playing_realms" = "Realms";

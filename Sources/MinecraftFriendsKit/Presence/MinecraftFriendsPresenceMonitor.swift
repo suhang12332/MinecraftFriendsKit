@@ -16,6 +16,7 @@ public final class MinecraftFriendsPresenceMonitor {
     private var lastStatusByFriendId: [String: MinecraftPresenceWireStatus]?
     private var seenInviteProfileIds = Set<String>()
     private var knownIncomingRequestProfileIds = Set<String>()
+    private var lastOutgoingRequestProfileIds: Set<String>?
     private var isTicking = false
 
     public init(
@@ -54,6 +55,7 @@ public final class MinecraftFriendsPresenceMonitor {
         lastStatusByFriendId = nil
         seenInviteProfileIds = []
         knownIncomingRequestProfileIds = []
+        lastOutgoingRequestProfileIds = nil
         friendListPreferenceLoaded = false
     }
 
@@ -102,13 +104,18 @@ public final class MinecraftFriendsPresenceMonitor {
         guard let previous = lastStatusByFriendId else {
             lastStatusByFriendId = Self.snapshotStatuses(from: data)
             knownIncomingRequestProfileIds = Self.snapshotIncomingRequestIds(from: data)
+            lastOutgoingRequestProfileIds = Self.snapshotOutgoingRequestIds(from: data)
             return
         }
 
         let next = Self.snapshotStatuses(from: data)
         defer { lastStatusByFriendId = next }
 
+        let previousOutgoing = lastOutgoingRequestProfileIds ?? []
+        defer { lastOutgoingRequestProfileIds = Self.snapshotOutgoingRequestIds(from: data) }
+
         await notifyNewIncomingFriendRequests(from: data)
+        await notifyAcceptedOutgoingFriendRequests(from: data, previousOutgoing: previousOutgoing)
 
         for f in data.lists.friends {
             let id = f.profileId.normalized
@@ -128,10 +135,10 @@ public final class MinecraftFriendsPresenceMonitor {
             }
 
             if !wasOn, isOn {
-                let body = localize("minecraft.friends.presence.online")
+                let body = localize("minecraft.friends.presence.online.notification")
                 await host.sendSilentNotification(title: name, body: body)
             } else if wasOn, !isOn {
-                let body = localize("minecraft.friends.presence.offline")
+                let body = localize("minecraft.friends.presence.offline.notification")
                 await host.sendSilentNotification(title: name, body: body)
             }
         }
@@ -149,12 +156,32 @@ public final class MinecraftFriendsPresenceMonitor {
         }
     }
 
+    private func notifyAcceptedOutgoingFriendRequests(
+        from data: MinecraftFriendsUIData,
+        previousOutgoing: Set<String>
+    ) async {
+        let currentOutgoing = Self.snapshotOutgoingRequestIds(from: data)
+        let currentFriendIds = Set(data.lists.friends.map { $0.profileId.normalized })
+        let acceptedIds = previousOutgoing.subtracting(currentOutgoing).intersection(currentFriendIds)
+
+        for friend in data.lists.friends {
+            let id = friend.profileId.normalized
+            guard acceptedIds.contains(id) else { continue }
+            let body = localize("minecraft.friends.request.accepted_hint")
+            await host.sendSilentNotification(title: friend.name, body: body)
+        }
+    }
+
     private static func isPresenceOnline(_ s: MinecraftPresenceWireStatus) -> Bool {
         s != .offline
     }
 
     private static func snapshotIncomingRequestIds(from data: MinecraftFriendsUIData) -> Set<String> {
         Set(data.lists.incomingRequests.map { $0.profileId.normalized })
+    }
+
+    private static func snapshotOutgoingRequestIds(from data: MinecraftFriendsUIData) -> Set<String> {
+        Set(data.lists.outgoingRequests.map { $0.profileId.normalized })
     }
 
     private static func snapshotStatuses(from data: MinecraftFriendsUIData) -> [String: MinecraftPresenceWireStatus] {
