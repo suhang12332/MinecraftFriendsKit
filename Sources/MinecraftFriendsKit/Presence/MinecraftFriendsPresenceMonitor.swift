@@ -15,6 +15,7 @@ public final class MinecraftFriendsPresenceMonitor {
 
     private var lastStatusByFriendId: [String: MinecraftPresenceWireStatus]?
     private var seenInviteProfileIds = Set<String>()
+    private var knownIncomingRequestProfileIds = Set<String>()
     private var isTicking = false
 
     public init(
@@ -52,6 +53,7 @@ public final class MinecraftFriendsPresenceMonitor {
     private func resetForNewPlayer() {
         lastStatusByFriendId = nil
         seenInviteProfileIds = []
+        knownIncomingRequestProfileIds = []
         friendListPreferenceLoaded = false
     }
 
@@ -99,11 +101,14 @@ public final class MinecraftFriendsPresenceMonitor {
 
         guard let previous = lastStatusByFriendId else {
             lastStatusByFriendId = Self.snapshotStatuses(from: data)
+            knownIncomingRequestProfileIds = Self.snapshotIncomingRequestIds(from: data)
             return
         }
 
         let next = Self.snapshotStatuses(from: data)
         defer { lastStatusByFriendId = next }
+
+        await notifyNewIncomingFriendRequests(from: data)
 
         for f in data.lists.friends {
             let id = f.profileId.normalized
@@ -132,8 +137,24 @@ public final class MinecraftFriendsPresenceMonitor {
         }
     }
 
+    private func notifyNewIncomingFriendRequests(from data: MinecraftFriendsUIData) async {
+        let currentIds = Self.snapshotIncomingRequestIds(from: data)
+        defer { knownIncomingRequestProfileIds.formIntersection(currentIds) }
+
+        for req in data.lists.incomingRequests {
+            let id = req.profileId.normalized
+            guard knownIncomingRequestProfileIds.insert(id).inserted else { continue }
+            let body = localize("minecraft.friends.request.incoming_hint")
+            await host.sendSilentNotification(title: req.name, body: body)
+        }
+    }
+
     private static func isPresenceOnline(_ s: MinecraftPresenceWireStatus) -> Bool {
         s != .offline
+    }
+
+    private static func snapshotIncomingRequestIds(from data: MinecraftFriendsUIData) -> Set<String> {
+        Set(data.lists.incomingRequests.map { $0.profileId.normalized })
     }
 
     private static func snapshotStatuses(from data: MinecraftFriendsUIData) -> [String: MinecraftPresenceWireStatus] {

@@ -10,6 +10,7 @@
 "minecraft.friends.error.duplicated_profiles" = "Duplicate player profiles.";
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "월드 참가를 초대했습니다";
+"minecraft.friends.request.incoming_hint" = "친구 요청을 보냈습니다";
 "minecraft.friends.presence.offline" = "오프라인";
 "minecraft.friends.presence.online" = "온라인";
 "minecraft.friends.presence.playing_hosted_server" = "LAN 호스팅";

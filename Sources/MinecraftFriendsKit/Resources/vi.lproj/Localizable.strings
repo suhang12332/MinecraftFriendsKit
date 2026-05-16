@@ -10,6 +10,7 @@
 "minecraft.friends.error.duplicated_profiles" = "Duplicate player profiles.";
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "Đã mời bạn tham gia thế giới của họ";
+"minecraft.friends.request.incoming_hint" = "Đã gửi lời mời kết bạn cho bạn";
 "minecraft.friends.presence.offline" = "Ngoại tuyến";
 "minecraft.friends.presence.online" = "Trực tuyến";
 "minecraft.friends.presence.playing_hosted_server" = "Đang mở LAN";

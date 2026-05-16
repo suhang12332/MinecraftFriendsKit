@@ -10,6 +10,7 @@
 "minecraft.friends.error.duplicated_profiles" = "重复的玩家档案";
 "minecraft.friends.error.unknown_profile" = "找不到该玩家名称或档案";
 "minecraft.friends.invite.invited_hint" = "邀请你加入其世界";
+"minecraft.friends.request.incoming_hint" = "向你发送了好友申请";
 "minecraft.friends.presence.offline" = "离线";
 "minecraft.friends.presence.online" = "在线";
 "minecraft.friends.presence.playing_hosted_server" = "开放局域网";

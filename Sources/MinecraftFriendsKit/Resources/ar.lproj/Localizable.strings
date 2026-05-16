@@ -10,6 +10,7 @@
 "minecraft.friends.error.duplicated_profiles" = "Duplicate player profiles.";
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "دعاك للانضمام إلى عالمه";
+"minecraft.friends.request.incoming_hint" = "أرسل لك طلب صداقة";
 "minecraft.friends.presence.offline" = "غير متصل";
 "minecraft.friends.presence.online" = "متصل";
 "minecraft.friends.presence.playing_hosted_server" = "استضافة شبكة محلية";
