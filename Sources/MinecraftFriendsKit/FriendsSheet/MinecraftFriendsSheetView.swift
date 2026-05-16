@@ -288,7 +288,7 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
             Circle()
                 .fill(presenceColor(s))
                 .frame(width: 7, height: 7)
-            Text(localize(presenceTitleKey(s)))
+            Text(localize(s.sheetTitleLocalizationKey))
                 .font(.caption.weight(.medium))
                 .foregroundStyle(presenceColor(s))
         }
@@ -305,21 +305,17 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
             return Color.secondary.opacity(0.45)
         }
     }
+}
 
-    private func presenceTitleKey(_ s: MinecraftPresenceWireStatus) -> String {
-        switch s {
-        case .online:
-            return "minecraft.friends.presence.online"
-        case .offline:
-            return "minecraft.friends.presence.offline"
-        case .playingOffline:
-            return "minecraft.friends.presence.playing_offline"
-        case .playingRealms:
-            return "minecraft.friends.presence.playing_realms"
-        case .playingServer:
-            return "minecraft.friends.presence.playing_server"
-        case .playingHostedServer:
-            return "minecraft.friends.presence.playing_hosted_server"
+private extension MinecraftPresenceWireStatus {
+    var sheetTitleLocalizationKey: String {
+        switch self {
+        case .online: "minecraft.friends.presence.online"
+        case .offline: "minecraft.friends.presence.offline"
+        case .playingOffline: "minecraft.friends.presence.playing_offline"
+        case .playingRealms: "minecraft.friends.presence.playing_realms"
+        case .playingServer: "minecraft.friends.presence.playing_server"
+        case .playingHostedServer: "minecraft.friends.presence.playing_hosted_server"
         }
     }
 }

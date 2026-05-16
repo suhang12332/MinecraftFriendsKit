@@ -45,13 +45,7 @@ public final class MinecraftFriendsSheetViewModel: ObservableObject {
         }
 
         do {
-            let fetched = try await friendsService.fetchFriendsAndPresence(
-                accessToken: token,
-                forceRefresh: forceRefresh
-            )
-            guard epoch == contentEpoch else { return }
-            uiData = fetched
-            await prefetchSkinTextureURLs(for: uiData, epoch: epoch, host: host)
+            try await reloadUIData(accessToken: token, forceRefresh: forceRefresh, epoch: epoch, host: host)
         } catch {
             host.reportFriendsError(error)
         }
@@ -111,40 +105,45 @@ public final class MinecraftFriendsSheetViewModel: ObservableObject {
         do {
             try await action(token)
             guard epoch == contentEpoch else { return }
-            let fetched = try await friendsService.fetchFriendsAndPresence(
-                accessToken: token,
-                forceRefresh: true
-            )
-            guard epoch == contentEpoch else { return }
-            uiData = fetched
-            await prefetchSkinTextureURLs(for: uiData, epoch: epoch, host: host)
+            try await reloadUIData(accessToken: token, forceRefresh: true, epoch: epoch, host: host)
         } catch {
             host.reportFriendsError(error)
         }
     }
 
+    private func reloadUIData(
+        accessToken: String,
+        forceRefresh: Bool,
+        epoch: UInt64,
+        host: any MinecraftFriendsSheetHost
+    ) async throws {
+        let fetched = try await friendsService.fetchFriendsAndPresence(
+            accessToken: accessToken,
+            forceRefresh: forceRefresh
+        )
+        guard epoch == contentEpoch else { return }
+        uiData = fetched
+        await prefetchSkinTextureURLs(for: uiData, epoch: epoch, host: host)
+    }
+
     private func prefetchSkinTextureURLs(for data: MinecraftFriendsUIData, epoch: UInt64, host: any MinecraftFriendsSheetHost) async {
         let ids = collectNormalizedUUIDs(from: data)
-        guard !ids.isEmpty else {
-            guard epoch == contentEpoch else { return }
-            skinTextureURLByUUID = [:]
+        if ids.isEmpty {
+            if epoch == contentEpoch { skinTextureURLByUUID = [:] }
             return
         }
 
         let batchSize = 4
         var built: [String: String] = [:]
-        var start = 0
-        while start < ids.count {
+        for batchStart in stride(from: 0, to: ids.count, by: batchSize) {
             guard epoch == contentEpoch else { return }
-            let end = min(start + batchSize, ids.count)
-            let batch = Array(ids[start..<end])
-            for id in batch {
+            let end = min(batchStart + batchSize, ids.count)
+            for id in ids[batchStart..<end] {
                 guard epoch == contentEpoch else { return }
                 if let url = await host.skinTextureURL(uuidNoHyphens: id), !url.isEmpty {
                     built[id] = url
                 }
             }
-            start = end
         }
         guard epoch == contentEpoch else { return }
         skinTextureURLByUUID = built

@@ -5,14 +5,6 @@ public enum MinecraftSessionProfileSkinResolver {
     private nonisolated(unsafe) static let hitCache = NSCache<NSString, NSString>()
     private static let log = Logger(subsystem: "MinecraftFriendsKit", category: "SessionSkin")
 
-    private enum Mime {
-        static let json = "application/json"
-    }
-
-    private enum Header {
-        static let accept = "Accept"
-    }
-
     public static func resolveTextureURLString(
         uuidNoHyphens: String,
         sessionProfileBaseURL: URL,
@@ -22,15 +14,14 @@ public enum MinecraftSessionProfileSkinResolver {
         guard trimmed.count == 32, trimmed.allSatisfy(\.isHexDigit) else { return nil }
 
         let cacheKey = trimmed as NSString
-        if let cached = hitCache.object(forKey: cacheKey) {
-            let s = cached as String
-            return s.isEmpty ? nil : s
+        if let cached = hitCache.object(forKey: cacheKey) as String? {
+            return cached.isEmpty ? nil : cached
         }
 
         let url = sessionProfileBaseURL.appendingPathComponent(trimmed)
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue(Mime.json, forHTTPHeaderField: Header.accept)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         do {
             let (data, http) = try await httpClient.performRequestWithResponse(request: request)
