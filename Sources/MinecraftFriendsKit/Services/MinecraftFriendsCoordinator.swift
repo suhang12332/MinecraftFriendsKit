@@ -76,7 +76,7 @@ actor MinecraftFriendsCoordinator {
             lastFriendsFetchAt = Date()
         }
 
-        let presenceBody = try service.jsonEncoder.encode(MinecraftPresenceRequest(status: .offline, joinInfo: nil))
+        let presenceBody = try service.jsonEncoder.encode(MinecraftPresenceRequest(status: .online, joinInfo: nil))
         markPresencePingStarted()
         let pres = try await service.executePostPresence(accessToken: accessToken, ifNoneMatch: presenceETag, body: presenceBody)
 
