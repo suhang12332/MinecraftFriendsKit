@@ -93,7 +93,7 @@ public final class MinecraftFriendsPresenceMonitor {
         do {
             data = try await friendsService.fetchFriendsAndPresence(
                 accessToken: token,
-                forceRefresh: false
+                forceRefresh: true
             )
         } catch {
             return
