@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "Đã mời bạn tham gia thế giới của họ";
 "minecraft.friends.request.incoming_hint" = "Đã gửi lời mời kết bạn cho bạn";
+"minecraft.friends.request.accepted_hint" = "Đã chấp nhận lời mời kết bạn của bạn";
 "minecraft.friends.presence.offline" = "Ngoại tuyến";
 "minecraft.friends.presence.online" = "Trực tuyến";
+"minecraft.friends.presence.online.notification" = "Đã trực tuyến";
+"minecraft.friends.presence.offline.notification" = "Đã ngoại tuyến";
 "minecraft.friends.presence.playing_hosted_server" = "Đang mở LAN";
 "minecraft.friends.presence.playing_offline" = "Chơi đơn";
 "minecraft.friends.presence.playing_realms" = "Realms";

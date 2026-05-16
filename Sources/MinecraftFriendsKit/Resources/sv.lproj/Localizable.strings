@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "Bjuder in dig att gå med i deras värld";
 "minecraft.friends.request.incoming_hint" = "Skickade en vänförfrågan";
+"minecraft.friends.request.accepted_hint" = "Accepterade din vänförfrågan";
 "minecraft.friends.presence.offline" = "Offline";
 "minecraft.friends.presence.online" = "Online";
+"minecraft.friends.presence.online.notification" = "Kom online";
+"minecraft.friends.presence.offline.notification" = "Gick offline";
 "minecraft.friends.presence.playing_hosted_server" = "Värd för LAN";
 "minecraft.friends.presence.playing_offline" = "Enspelarläge";
 "minecraft.friends.presence.playing_realms" = "Realms";

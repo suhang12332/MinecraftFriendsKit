@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "Convidou você a entrar no mundo dele(a)";
 "minecraft.friends.request.incoming_hint" = "Enviou um pedido de amizade";
+"minecraft.friends.request.accepted_hint" = "Aceitou seu pedido de amizade";
 "minecraft.friends.presence.offline" = "Offline";
 "minecraft.friends.presence.online" = "Online";
+"minecraft.friends.presence.online.notification" = "Ficou online";
+"minecraft.friends.presence.offline.notification" = "Ficou offline";
 "minecraft.friends.presence.playing_hosted_server" = "Hospedando LAN";
 "minecraft.friends.presence.playing_offline" = "Um jogador";
 "minecraft.friends.presence.playing_realms" = "Realms";

@@ -11,8 +11,11 @@
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "เชิญคุณเข้าร่วมโลกของเขา/เธอ";
 "minecraft.friends.request.incoming_hint" = "ส่งคำขอเป็นเพื่อนถึงคุณ";
+"minecraft.friends.request.accepted_hint" = "ยอมรับคำขอเป็นเพื่อนของคุณแล้ว";
 "minecraft.friends.presence.offline" = "ออฟไลน์";
 "minecraft.friends.presence.online" = "ออนไลน์";
+"minecraft.friends.presence.online.notification" = "ออนไลน์แล้ว";
+"minecraft.friends.presence.offline.notification" = "ออฟไลน์แล้ว";
 "minecraft.friends.presence.playing_hosted_server" = "โฮสต์ LAN";
 "minecraft.friends.presence.playing_offline" = "ผู้เล่นคนเดียว";
 "minecraft.friends.presence.playing_realms" = "Realms";
