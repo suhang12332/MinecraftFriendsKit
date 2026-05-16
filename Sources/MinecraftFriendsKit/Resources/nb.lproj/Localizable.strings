@@ -10,6 +10,7 @@
 "minecraft.friends.error.duplicated_profiles" = "Duplicate player profiles.";
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "Har invitert deg til å bli med i verdenen sin";
+"minecraft.friends.request.incoming_hint" = "Har sendt deg en venneforespørsel";
 "minecraft.friends.presence.offline" = "Frakoblet";
 "minecraft.friends.presence.online" = "Pålogget";
 "minecraft.friends.presence.playing_hosted_server" = "Vert for LAN";

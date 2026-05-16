@@ -10,6 +10,7 @@
 "minecraft.friends.error.duplicated_profiles" = "Duplicate player profiles.";
 "minecraft.friends.error.unknown_profile" = "Could not find that player name or profile.";
 "minecraft.friends.invite.invited_hint" = "Convidou você a entrar no mundo dele(a)";
+"minecraft.friends.request.incoming_hint" = "Enviou um pedido de amizade";
 "minecraft.friends.presence.offline" = "Offline";
 "minecraft.friends.presence.online" = "Online";
 "minecraft.friends.presence.playing_hosted_server" = "Hospedando LAN";

@@ -26,7 +26,7 @@ actor MinecraftFriendsCoordinator {
             updatePresence && elapsed >= Self.presenceUpdateInterval
             || elapsed >= Self.maxPresenceUpdateInterval
         guard intervalEligible else { return false }
-        if let friends = lastLists?.friends, friends.isEmpty { return false }
+        if let lists = lastLists, lists.friends.isEmpty, lists.incomingRequests.isEmpty { return false }
         return true
     }
 
