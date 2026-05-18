@@ -13,10 +13,10 @@ public final class MinecraftFriendsPresenceMonitor {
     private var friendListPreferenceLoaded = false
     private var friendListEnabled = false
 
+    private var presenceNotificationsReady = false
     private var lastStatusByFriendId: [String: MinecraftPresenceWireStatus]?
     private var seenInviteProfileIds = Set<String>()
-    private var knownIncomingRequestProfileIds = Set<String>()
-    private var lastOutgoingRequestProfileIds: Set<String>?
+
     private var isTicking = false
 
     public init(
@@ -52,11 +52,11 @@ public final class MinecraftFriendsPresenceMonitor {
     }
 
     private func resetForNewPlayer() {
+        presenceNotificationsReady = false
         lastStatusByFriendId = nil
         seenInviteProfileIds = []
-        knownIncomingRequestProfileIds = []
-        lastOutgoingRequestProfileIds = nil
         friendListPreferenceLoaded = false
+        Task { await friendsService.resetPresencePollingSchedule() }
     }
 
     public func tick(context: MinecraftFriendsPresenceTickContext) async {
@@ -87,45 +87,61 @@ public final class MinecraftFriendsPresenceMonitor {
 
         guard friendListEnabled else { return }
 
+        let hasFriends = !(await friendsService.cachedFriendsLists()?.friends.isEmpty ?? true)
+        guard await friendsService.shouldRefreshMinecraftPresenceForPolling(
+            friendListEnabled: friendListEnabled,
+            hasFriends: hasFriends
+        ) else { return }
+
         guard let token = await host.friendsAccessToken(playerId: playerId) else { return }
 
-        guard await friendsService.shouldRefreshMinecraftPresenceForPolling(friendListEnabled: friendListEnabled) else { return }
-
-        let data: MinecraftFriendsUIData
+        let presenceById: [String: MinecraftPresenceStatusDTO]
         do {
-            data = try await friendsService.fetchFriendsAndPresence(
-                accessToken: token,
-                forceRefresh: true
-            )
+            presenceById = try await friendsService.fetchPresenceForPolling(accessToken: token)
         } catch {
             return
         }
 
-        guard let previous = lastStatusByFriendId else {
-            lastStatusByFriendId = Self.snapshotStatuses(from: data)
-            knownIncomingRequestProfileIds = Self.snapshotIncomingRequestIds(from: data)
-            lastOutgoingRequestProfileIds = Self.snapshotOutgoingRequestIds(from: data)
+        let nameByProfileId = Self.nameLookup(from: await friendsService.cachedFriendsLists())
+
+        if !presenceNotificationsReady {
+            lastStatusByFriendId = Self.snapshotStatuses(from: presenceById)
+            presenceNotificationsReady = true
             return
         }
 
-        let next = Self.snapshotStatuses(from: data)
+        guard let previous = lastStatusByFriendId else {
+            lastStatusByFriendId = Self.snapshotStatuses(from: presenceById)
+            return
+        }
+
+        let next = Self.snapshotStatuses(from: presenceById)
         defer { lastStatusByFriendId = next }
 
-        let previousOutgoing = lastOutgoingRequestProfileIds ?? []
-        defer { lastOutgoingRequestProfileIds = Self.snapshotOutgoingRequestIds(from: data) }
+        await notifyPresenceChanges(
+            presenceById: presenceById,
+            nameByProfileId: nameByProfileId,
+            previous: previous,
+            next: next
+        )
+    }
 
-        await notifyNewIncomingFriendRequests(from: data)
-        await notifyAcceptedOutgoingFriendRequests(from: data, previousOutgoing: previousOutgoing)
+    private func notifyPresenceChanges(
+        presenceById: [String: MinecraftPresenceStatusDTO],
+        nameByProfileId: [String: String],
+        previous: [String: MinecraftPresenceWireStatus],
+        next: [String: MinecraftPresenceWireStatus]
+    ) async {
+        let profileIds = Set(previous.keys).union(next.keys)
+        for id in profileIds {
+            guard let name = nameByProfileId[id] else { continue }
 
-        for f in data.lists.friends {
-            let id = f.profileId.normalized
-            let name = f.name
             let oldS = previous[id] ?? .offline
             let newS = next[id] ?? .offline
             let wasOn = Self.isPresenceOnline(oldS)
             let isOn = Self.isPresenceOnline(newS)
 
-            if let row = data.presenceByProfileId[id], row.joinInfo?.invited == true {
+            if let row = presenceById[id], row.joinInfo?.invited == true {
                 if seenInviteProfileIds.insert(id).inserted {
                     let body = localize("minecraft.friends.invite.invited_hint")
                     await host.sendSilentNotification(title: name, body: body)
@@ -144,52 +160,26 @@ public final class MinecraftFriendsPresenceMonitor {
         }
     }
 
-    private func notifyNewIncomingFriendRequests(from data: MinecraftFriendsUIData) async {
-        let currentIds = Self.snapshotIncomingRequestIds(from: data)
-        defer { knownIncomingRequestProfileIds.formIntersection(currentIds) }
-
-        for req in data.lists.incomingRequests {
-            let id = req.profileId.normalized
-            guard knownIncomingRequestProfileIds.insert(id).inserted else { continue }
-            let body = localize("minecraft.friends.request.incoming_hint")
-            await host.sendSilentNotification(title: req.name, body: body)
-        }
-    }
-
-    private func notifyAcceptedOutgoingFriendRequests(
-        from data: MinecraftFriendsUIData,
-        previousOutgoing: Set<String>
-    ) async {
-        let currentOutgoing = Self.snapshotOutgoingRequestIds(from: data)
-        let currentFriendIds = Set(data.lists.friends.map { $0.profileId.normalized })
-        let acceptedIds = previousOutgoing.subtracting(currentOutgoing).intersection(currentFriendIds)
-
-        for friend in data.lists.friends {
-            let id = friend.profileId.normalized
-            guard acceptedIds.contains(id) else { continue }
-            let body = localize("minecraft.friends.request.accepted_hint")
-            await host.sendSilentNotification(title: friend.name, body: body)
-        }
-    }
-
     private static func isPresenceOnline(_ s: MinecraftPresenceWireStatus) -> Bool {
         s != .offline
     }
 
-    private static func snapshotIncomingRequestIds(from data: MinecraftFriendsUIData) -> Set<String> {
-        Set(data.lists.incomingRequests.map { $0.profileId.normalized })
-    }
-
-    private static func snapshotOutgoingRequestIds(from data: MinecraftFriendsUIData) -> Set<String> {
-        Set(data.lists.outgoingRequests.map { $0.profileId.normalized })
-    }
-
-    private static func snapshotStatuses(from data: MinecraftFriendsUIData) -> [String: MinecraftPresenceWireStatus] {
-        var m: [String: MinecraftPresenceWireStatus] = [:]
-        for f in data.lists.friends {
-            let id = f.profileId.normalized
-            m[id] = data.presenceByProfileId[id]?.status ?? .offline
+    private static func nameLookup(from lists: MinecraftFriendsListResponse?) -> [String: String] {
+        guard let lists else { return [:] }
+        var names: [String: String] = [:]
+        for friend in lists.friends {
+            names[friend.profileId.normalized] = friend.name
         }
-        return m
+        return names
+    }
+
+    private static func snapshotStatuses(
+        from presenceById: [String: MinecraftPresenceStatusDTO]
+    ) -> [String: MinecraftPresenceWireStatus] {
+        var statuses: [String: MinecraftPresenceWireStatus] = [:]
+        for (id, row) in presenceById {
+            statuses[id] = row.status
+        }
+        return statuses
     }
 }

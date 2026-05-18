@@ -29,6 +29,30 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         )
     }
 
+    public func cachedFriendsLists() async -> MinecraftFriendsListResponse? {
+        await coordinator.cachedLists()
+    }
+
+    func resetPresencePollingSchedule() async {
+        await coordinator.resetPresencePollingSchedule()
+    }
+
+    func resetFriendListPollingSchedule() async {
+        await coordinator.resetFriendListPollingSchedule()
+    }
+
+    public func fetchFriendsListsForPolling(accessToken: String) async throws -> MinecraftFriendsListResponse {
+        try await coordinator.fetchFriendsListsForPolling(accessToken: accessToken, service: self)
+    }
+
+    public func fetchPresenceForPolling(accessToken: String) async throws -> [String: MinecraftPresenceStatusDTO] {
+        try await coordinator.fetchPresenceForPolling(accessToken: accessToken, service: self)
+    }
+
+    public func shouldRefreshFriendListForPolling(friendListEnabled: Bool) async -> Bool {
+        await coordinator.shouldRefreshFriendListForPolling(friendListEnabled: friendListEnabled)
+    }
+
     public func resolveSessionProfileSkinTextureURL(uuidNoHyphens: String) async -> String? {
         await MinecraftSessionProfileSkinResolver.resolveTextureURLString(
             uuidNoHyphens: uuidNoHyphens,
@@ -73,8 +97,14 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         Task { await coordinator.markTryUpdatePresence() }
     }
 
-    public func shouldRefreshMinecraftPresenceForPolling(friendListEnabled: Bool) async -> Bool {
-        await coordinator.shouldRefreshPresence(friendListEnabled: friendListEnabled)
+    public func shouldRefreshMinecraftPresenceForPolling(
+        friendListEnabled: Bool,
+        hasFriends: Bool
+    ) async -> Bool {
+        await coordinator.shouldRefreshPresence(
+            friendListEnabled: friendListEnabled,
+            hasFriends: hasFriends
+        )
     }
 
     public func fetchFriendAccountPreferences(accessToken: String) async throws -> MinecraftFriendsPreferencesPayload {
