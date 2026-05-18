@@ -10,6 +10,7 @@ public final class MinecraftFriendsFriendListMonitor {
     private let preferencesDidChangeNotification: Notification.Name?
 
     nonisolated(unsafe) private var preferencesObserver: NSObjectProtocol?
+    private var preferencesInvalidationTask: Task<Void, Never>?
 
     private var trackedPlayerId: String?
     private var friendListPreferenceLoaded = false
@@ -38,14 +39,24 @@ public final class MinecraftFriendsFriendListMonitor {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in self?.invalidateFriendListPreferencesCache() }
+                Task { @MainActor in
+                    self?.schedulePreferencesInvalidation()
+                }
             }
         }
     }
 
     deinit {
+        preferencesInvalidationTask?.cancel()
         if let preferencesObserver {
             NotificationCenter.default.removeObserver(preferencesObserver)
+        }
+    }
+
+    private func schedulePreferencesInvalidation() {
+        preferencesInvalidationTask?.cancel()
+        preferencesInvalidationTask = Task {
+            invalidateFriendListPreferencesCache()
         }
     }
 

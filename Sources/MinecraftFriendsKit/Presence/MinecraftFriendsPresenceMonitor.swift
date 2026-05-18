@@ -8,6 +8,7 @@ public final class MinecraftFriendsPresenceMonitor {
     private let preferencesDidChangeNotification: Notification.Name?
 
     nonisolated(unsafe) private var preferencesObserver: NSObjectProtocol?
+    private var preferencesInvalidationTask: Task<Void, Never>?
 
     private var trackedPlayerId: String?
     private var friendListPreferenceLoaded = false
@@ -36,14 +37,24 @@ public final class MinecraftFriendsPresenceMonitor {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in self?.invalidateFriendListPreferencesCache() }
+                Task { @MainActor in
+                    self?.schedulePreferencesInvalidation()
+                }
             }
         }
     }
 
     deinit {
+        preferencesInvalidationTask?.cancel()
         if let preferencesObserver {
             NotificationCenter.default.removeObserver(preferencesObserver)
+        }
+    }
+
+    private func schedulePreferencesInvalidation() {
+        preferencesInvalidationTask?.cancel()
+        preferencesInvalidationTask = Task {
+            invalidateFriendListPreferencesCache()
         }
     }
 
@@ -102,28 +113,45 @@ public final class MinecraftFriendsPresenceMonitor {
             return
         }
 
-        let nameByProfileId = Self.nameLookup(from: await friendsService.cachedFriendsLists())
+        let cachedLists = await friendsService.cachedFriendsLists()
+        let nameByProfileId = Self.nameLookup(from: cachedLists)
+        let friendProfileIds = MinecraftFriendsPresenceState.friendProfileIds(from: cachedLists)
+        let presenceForFriends = MinecraftFriendsPresenceState.filteredPresence(
+            presenceById,
+            friendProfileIds: friendProfileIds
+        )
 
         if !presenceNotificationsReady {
-            lastStatusByFriendId = Self.snapshotStatuses(from: presenceById)
+            lastStatusByFriendId = MinecraftFriendsPresenceState.snapshotStatuses(
+                from: presenceById,
+                friendProfileIds: friendProfileIds
+            )
+            seenInviteProfileIds.formIntersection(friendProfileIds)
             presenceNotificationsReady = true
             return
         }
 
         guard let previous = lastStatusByFriendId else {
-            lastStatusByFriendId = Self.snapshotStatuses(from: presenceById)
+            lastStatusByFriendId = MinecraftFriendsPresenceState.snapshotStatuses(
+                from: presenceById,
+                friendProfileIds: friendProfileIds
+            )
             return
         }
 
-        let next = Self.snapshotStatuses(from: presenceById)
+        let next = MinecraftFriendsPresenceState.snapshotStatuses(
+            from: presenceById,
+            friendProfileIds: friendProfileIds
+        )
         defer { lastStatusByFriendId = next }
 
         await notifyPresenceChanges(
-            presenceById: presenceById,
+            presenceById: presenceForFriends,
             nameByProfileId: nameByProfileId,
             previous: previous,
             next: next
         )
+        seenInviteProfileIds.formIntersection(friendProfileIds)
     }
 
     private func notifyPresenceChanges(
@@ -132,8 +160,7 @@ public final class MinecraftFriendsPresenceMonitor {
         previous: [String: MinecraftPresenceWireStatus],
         next: [String: MinecraftPresenceWireStatus]
     ) async {
-        let profileIds = Set(previous.keys).union(next.keys)
-        for id in profileIds {
+        for id in nameByProfileId.keys {
             guard let name = nameByProfileId[id] else { continue }
 
             let oldS = previous[id] ?? .offline
@@ -171,15 +198,5 @@ public final class MinecraftFriendsPresenceMonitor {
             names[friend.profileId.normalized] = friend.name
         }
         return names
-    }
-
-    private static func snapshotStatuses(
-        from presenceById: [String: MinecraftPresenceStatusDTO]
-    ) -> [String: MinecraftPresenceWireStatus] {
-        var statuses: [String: MinecraftPresenceWireStatus] = [:]
-        for (id, row) in presenceById {
-            statuses[id] = row.status
-        }
-        return statuses
     }
 }

@@ -128,13 +128,16 @@ actor MinecraftFriendsCoordinator {
             for row in pres.presence.presence {
                 map[row.profileId.normalized] = row
             }
+            let friendIds = MinecraftFriendsPresenceState.friendProfileIds(from: lastLists)
+            map = MinecraftFriendsPresenceState.filteredPresence(map, friendProfileIds: friendIds)
             lastPresenceById = map
             if let e = pres.etag, !e.isEmpty {
                 presenceETag = e
             }
             return map
         }
-        return lastPresenceById
+        let friendIds = MinecraftFriendsPresenceState.friendProfileIds(from: lastLists)
+        return MinecraftFriendsPresenceState.filteredPresence(lastPresenceById, friendProfileIds: friendIds)
     }
 
     func fetchBundle(accessToken: String, forceRefresh: Bool, service: MinecraftFriendsService) async throws -> MinecraftFriendsUIData {
