@@ -107,11 +107,7 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
 
     @ViewBuilder private var bodyContent: some View {
         Group {
-            if viewModel.isLoading {
-                ProgressView()
-                    .controlSize(.small)
-                    .frame(maxWidth: .infinity, minHeight: 120)
-            } else if isEmptyState {
+            if isEmptyState {
                 Text(localize("minecraft.friends.empty"))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
@@ -208,8 +204,7 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .font(.headline)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
