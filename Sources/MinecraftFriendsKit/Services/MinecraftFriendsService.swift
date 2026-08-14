@@ -1,5 +1,10 @@
 import Foundation
 
+/// The main service class for interacting with the Minecraft friends API.
+///
+/// Orchestrates all API communication including fetching friend lists and presence,
+/// performing friend actions (add, remove, accept, decline, revoke), updating
+/// friend settings, and resolving player skin textures.
 public final class MinecraftFriendsService: @unchecked Sendable {
     private let configuration: MinecraftFriendsAPIConfiguration
     private let httpClient: MinecraftFriendsHTTPClient
@@ -7,6 +12,11 @@ public final class MinecraftFriendsService: @unchecked Sendable {
     let jsonEncoder: JSONEncoder
     private let coordinator = MinecraftFriendsCoordinator()
 
+    /// Creates a new friends service.
+    ///
+    /// - Parameters:
+    ///   - configuration: The API endpoint configuration. Defaults to `.production`.
+    ///   - httpClient: The HTTP client for network requests. Defaults to the shared URL session client.
     public init(
         configuration: MinecraftFriendsAPIConfiguration = .production,
         httpClient: MinecraftFriendsHTTPClient = MinecraftFriendsURLSessionHTTPClient.shared
@@ -21,6 +31,12 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         self.jsonEncoder = encoder
     }
 
+    /// Fetches both friend lists and presence data in a single bundled request.
+    ///
+    /// - Parameters:
+    ///   - accessToken: The Microsoft access token.
+    ///   - forceRefresh: Whether to bypass the cache and fetch fresh data.
+    /// - Returns: The combined UI data containing friend lists and presence information.
     public func fetchFriendsAndPresence(accessToken: String, forceRefresh: Bool) async throws -> MinecraftFriendsUIData {
         try await coordinator.fetchBundle(
             accessToken: accessToken,
@@ -29,6 +45,7 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         )
     }
 
+    /// Returns the cached friends list, if available.
     public func cachedFriendsLists() async -> MinecraftFriendsListResponse? {
         await coordinator.cachedLists()
     }
@@ -41,18 +58,34 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         await coordinator.resetFriendListPollingSchedule()
     }
 
+    /// Fetches friend lists for background polling.
+    ///
+    /// - Parameter accessToken: The Microsoft access token.
+    /// - Returns: The friends list response.
     public func fetchFriendsListsForPolling(accessToken: String) async throws -> MinecraftFriendsListResponse {
         try await coordinator.fetchFriendsListsForPolling(accessToken: accessToken, service: self)
     }
 
+    /// Fetches presence data for background polling.
+    ///
+    /// - Parameter accessToken: The Microsoft access token.
+    /// - Returns: A dictionary mapping profile IDs to their presence status.
     public func fetchPresenceForPolling(accessToken: String) async throws -> [String: MinecraftPresenceStatusDTO] {
         try await coordinator.fetchPresenceForPolling(accessToken: accessToken, service: self)
     }
 
+    /// Determines whether the friend list should be refreshed for polling.
+    ///
+    /// - Parameter friendListEnabled: Whether the friend list feature is enabled.
+    /// - Returns: `true` if a refresh is needed.
     public func shouldRefreshFriendListForPolling(friendListEnabled: Bool) async -> Bool {
         await coordinator.shouldRefreshFriendListForPolling(friendListEnabled: friendListEnabled)
     }
 
+    /// Resolves the skin texture URL for a player by their UUID.
+    ///
+    /// - Parameter uuidNoHyphens: The player UUID without hyphens.
+    /// - Returns: The skin texture URL string, or `nil` if unavailable.
     public func resolveSessionProfileSkinTextureURL(uuidNoHyphens: String) async -> String? {
         await MinecraftSessionProfileSkinResolver.resolveTextureURLString(
             uuidNoHyphens: uuidNoHyphens,
@@ -61,6 +94,12 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         )
     }
 
+    /// Performs a friend action (add, remove, accept, decline, revoke).
+    ///
+    /// - Parameters:
+    ///   - accessToken: The Microsoft access token.
+    ///   - request: The friend action request.
+    /// - Returns: The updated friends list response.
     public func performFriendAction(accessToken: String, request: MinecraftFriendActionRequest) async throws -> MinecraftFriendsListResponse {
         let data = try await authorizedJSONData(
             url: configuration.friendsListURL,
@@ -73,6 +112,12 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         return lists
     }
 
+    /// Updates the player's friend list preferences.
+    ///
+    /// - Parameters:
+    ///   - accessToken: The Microsoft access token.
+    ///   - enableFriendlist: Whether the friend list is enabled.
+    ///   - enableFriendInvites: Whether friend invites are accepted.
     public func updateFriendSettings(
         accessToken: String,
         enableFriendlist: Bool,
@@ -93,10 +138,17 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         markPresenceRefreshSoon()
     }
 
+    /// Schedules an imminent presence refresh.
     public func markPresenceRefreshSoon() {
         Task { await coordinator.markTryUpdatePresence() }
     }
 
+    /// Determines whether presence should be refreshed for polling.
+    ///
+    /// - Parameters:
+    ///   - friendListEnabled: Whether the friend list feature is enabled.
+    ///   - hasFriends: Whether the player has any friends.
+    /// - Returns: `true` if a refresh is needed.
     public func shouldRefreshMinecraftPresenceForPolling(
         friendListEnabled: Bool,
         hasFriends: Bool
@@ -107,6 +159,10 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         )
     }
 
+    /// Fetches the player's friend account preferences.
+    ///
+    /// - Parameter accessToken: The Microsoft access token.
+    /// - Returns: The friends preferences payload.
     public func fetchFriendAccountPreferences(accessToken: String) async throws -> MinecraftFriendsPreferencesPayload {
         let data = try await authorizedJSONData(
             url: configuration.playerAttributesURL,
@@ -116,7 +172,7 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         )
         guard let parsed = extractFriendsPreferencesPayload(from: data) else {
             throw MinecraftFriendsServiceError.validation(
-                message: "无法解析账号好友偏好设置",
+                message: "Failed to parse account friend preferences",
                 i18nKey: "minecraft.friends.settings.parse_failed",
                 level: .notification
             )
@@ -230,39 +286,39 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         switch code {
         case 401:
             throw MinecraftFriendsServiceError.authentication(
-                message: "Minecraft 访问令牌无效或已过期，请重新登录",
+                message: "Minecraft access token is invalid or has expired. Please sign in again.",
                 i18nKey: "error.authentication.token_expired",
                 level: .popup
             )
         case 403:
             throw MinecraftFriendsServiceError.authentication(
-                message: "没有权限访问好友服务 (403)",
+                message: "No permission to access the friends service (403)",
                 i18nKey: "error.network.api_request_failed",
                 level: .notification
             )
         case 400:
             let detail = parseFriendsErrorDetail(from: data)
             throw MinecraftFriendsServiceError.validation(
-                message: detail?.chineseMessage ?? "无效的请求参数",
+                message: detail?.message ?? "Invalid request parameters",
                 i18nKey: detail?.i18nKey ?? "error.validation.invalid_request",
                 level: .notification
             )
         case 429:
             throw MinecraftFriendsServiceError.network(
-                message: "请求过于频繁，请稍后再试",
+                message: "Request rate limited. Please try again later.",
                 i18nKey: "error.network.rate_limited",
                 level: .notification
             )
         case 500 ... 599:
             throw MinecraftFriendsServiceError.network(
-                message: "好友服务暂时不可用 (HTTP \(code))",
+                message: "Friends service temporarily unavailable (HTTP \(code))",
                 i18nKey: "error.network.api_request_failed",
                 level: .notification
             )
         default:
             let snippet = String(data: data.prefix(256), encoding: .utf8) ?? ""
             throw MinecraftFriendsServiceError.network(
-                message: "好友接口错误 HTTP \(code): \(snippet)",
+                message: "Friends API error HTTP \(code): \(snippet)",
                 i18nKey: "error.network.api_request_failed",
                 level: .notification
             )
@@ -309,17 +365,17 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         return MinecraftFriendsPreferencesPayload(friends: friends, acceptInvites: invites)
     }
 
-    private static func parseFriendsErrorDetail(from data: Data) -> (chineseMessage: String, i18nKey: String)? {
+    private static func parseFriendsErrorDetail(from data: Data) -> (message: String, i18nKey: String)? {
         guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
         let details = obj["details"] as? [String: Any] ?? obj["Details"] as? [String: Any]
         let status = details?["status"] as? String ?? details?["Status"] as? String
         switch status {
         case "UNKNOWN_PROFILE":
-            return ("找不到该玩家名称或档案", "minecraft.friends.error.unknown_profile")
+            return ("Player name or profile not found", "minecraft.friends.error.unknown_profile")
         case "CANNOT_ADD_SELF":
-            return ("不能添加自己为好友", "minecraft.friends.error.cannot_add_self")
+            return ("Cannot add yourself as a friend", "minecraft.friends.error.cannot_add_self")
         case "DUPLICATED_PROFILES":
-            return ("重复的玩家档案", "minecraft.friends.error.duplicated_profiles")
+            return ("Duplicate player profiles", "minecraft.friends.error.duplicated_profiles")
         default:
             return nil
         }

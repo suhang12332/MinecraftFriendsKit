@@ -1,5 +1,10 @@
 import Foundation
 
+/// An actor that manages caching, throttling, and deduplication for background polling.
+///
+/// Tracks ETags for conditional requests (`If-None-Match` / `304 Not Modified`),
+/// enforces 10-second and 60-second polling intervals, deduplicates in-flight
+/// tasks for friend list and presence fetches, and caches the last-known state.
 actor MinecraftFriendsCoordinator {
     private static let friendsUICooldown: TimeInterval = 10
     private static let presenceUpdateInterval: TimeInterval = 10
@@ -19,24 +24,32 @@ actor MinecraftFriendsCoordinator {
     private var lastPresencePostAt = Date()
     private var updateFriendList = true
 
+    /// Returns the cached friends list response, if available.
     func cachedLists() -> MinecraftFriendsListResponse? {
         lastLists
     }
 
+    /// Resets the presence polling schedule so the next tick triggers a refresh.
     func resetPresencePollingSchedule() {
         lastPresencePostAt = Date()
         updatePresence = true
     }
 
+    /// Resets the friend list polling schedule so the next tick triggers a refresh.
     func resetFriendListPollingSchedule() {
         lastFriendListPollAt = Date()
         updateFriendList = true
     }
 
+    /// Marks the presence update flag so the next tick triggers a refresh.
     func markTryUpdatePresence() {
         updatePresence = true
     }
 
+    /// Determines whether the friend list should be refreshed for polling.
+    ///
+    /// - Parameter friendListEnabled: Whether the friend list feature is enabled.
+    /// - Returns: `true` if a refresh is needed based on elapsed time and flags.
     func shouldRefreshFriendListForPolling(friendListEnabled: Bool) -> Bool {
         guard friendListEnabled else { return false }
         guard let lastFriendListPollAt else { return true }
@@ -45,6 +58,12 @@ actor MinecraftFriendsCoordinator {
             || elapsed >= Self.maxPresenceUpdateInterval
     }
 
+    /// Determines whether presence should be refreshed for polling.
+    ///
+    /// - Parameters:
+    ///   - friendListEnabled: Whether the friend list feature is enabled.
+    ///   - hasFriends: Whether the player has any friends.
+    /// - Returns: `true` if a refresh is needed based on elapsed time and flags.
     func shouldRefreshPresence(friendListEnabled: Bool, hasFriends: Bool) -> Bool {
         guard friendListEnabled, hasFriends else { return false }
         let elapsed = Date().timeIntervalSince(lastPresencePostAt)
@@ -64,6 +83,12 @@ actor MinecraftFriendsCoordinator {
         lastFriendListPollAt = Date()
     }
 
+    /// Fetches friend lists for polling, deduplicating concurrent requests.
+    ///
+    /// - Parameters:
+    ///   - accessToken: The Microsoft access token.
+    ///   - service: The friends service to execute the request.
+    /// - Returns: The friends list response.
     func fetchFriendsListsForPolling(accessToken: String, service: MinecraftFriendsService) async throws -> MinecraftFriendsListResponse {
         if let inflightFriendsPoll {
             return try await inflightFriendsPoll.value
@@ -96,6 +121,9 @@ actor MinecraftFriendsCoordinator {
         return lists
     }
 
+    /// Updates the cached friends list after a successful PUT friend action.
+    ///
+    /// - Parameter lists: The updated friends list response from the server.
     func applyPutFriendsSuccess(lists: MinecraftFriendsListResponse) {
         lastLists = lists
         friendsETag = nil
@@ -103,6 +131,12 @@ actor MinecraftFriendsCoordinator {
         updateFriendList = true
     }
 
+    /// Fetches presence data for polling, deduplicating concurrent requests.
+    ///
+    /// - Parameters:
+    ///   - accessToken: The Microsoft access token.
+    ///   - service: The friends service to execute the request.
+    /// - Returns: A dictionary mapping profile IDs to their presence status.
     func fetchPresenceForPolling(accessToken: String, service: MinecraftFriendsService) async throws -> [String: MinecraftPresenceStatusDTO] {
         if let inflightPresencePoll {
             return try await inflightPresencePoll.value
@@ -140,6 +174,13 @@ actor MinecraftFriendsCoordinator {
         return MinecraftFriendsPresenceState.filteredPresence(lastPresenceById, friendProfileIds: friendIds)
     }
 
+    /// Fetches a combined bundle of friends list and presence data, deduplicating concurrent requests.
+    ///
+    /// - Parameters:
+    ///   - accessToken: The Microsoft access token.
+    ///   - forceRefresh: Whether to bypass the cache and fetch fresh data.
+    ///   - service: The friends service to execute the request.
+    /// - Returns: The combined UI data containing friend lists and presence information.
     func fetchBundle(accessToken: String, forceRefresh: Bool, service: MinecraftFriendsService) async throws -> MinecraftFriendsUIData {
         if let inflightBundle {
             return try await inflightBundle.value

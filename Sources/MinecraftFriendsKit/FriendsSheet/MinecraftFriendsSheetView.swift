@@ -1,11 +1,20 @@
 import SwiftUI
 
+/// A layout wrapper that arranges header, body, and footer content
+/// with optional scroll height limiting for the body section.
 struct MinecraftFriendsSheetChrome<Header: View, BodyContent: View, Footer: View>: View {
     private let limitBodyScrollHeight: Bool
     private let header: () -> Header
     private let bodyContent: () -> BodyContent
     private let footer: () -> Footer
 
+    /// Creates a new sheet chrome layout.
+    ///
+    /// - Parameters:
+    ///   - limitBodyScrollHeight: Whether to limit the body scroll height to 400 points.
+    ///   - header: The header content.
+    ///   - body: The body content.
+    ///   - footer: The footer content.
     init(
         limitBodyScrollHeight: Bool,
         @ViewBuilder header: @escaping () -> Header,
@@ -44,6 +53,10 @@ struct MinecraftFriendsSheetChrome<Header: View, BodyContent: View, Footer: View
     }
 }
 
+/// The main SwiftUI view for the Minecraft friends sheet.
+///
+/// Displays friend lists (confirmed friends, incoming requests, outgoing requests)
+/// with presence indicators, skin previews, and action buttons.
 public struct MinecraftFriendsSheetView<Skin: View>: View {
     private let playerId: String
     @ObservedObject private var viewModel: MinecraftFriendsSheetViewModel
@@ -57,6 +70,14 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
     @State private var showAddFriendPopover = false
     @FocusState private var addFriendFieldFocused: Bool
 
+    /// Creates a new friends sheet view.
+    ///
+    /// - Parameters:
+    ///   - playerId: The Minecraft player ID to display friends for.
+    ///   - viewModel: The view model driving the sheet's data and actions.
+    ///   - localize: A closure that resolves localization keys to strings.
+    ///   - limitBodyScrollHeight: Whether to limit the body scroll height.
+    ///   - skinView: A closure that produces a skin preview view for a given player ID and optional texture URL.
     public init(
         playerId: String,
         viewModel: MinecraftFriendsSheetViewModel,
