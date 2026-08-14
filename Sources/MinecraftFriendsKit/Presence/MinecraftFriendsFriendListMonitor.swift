@@ -1,7 +1,11 @@
 import Foundation
 
-/// Polls the Mojang friends list on the same 10s / 60s cadence as presence notification polling
-/// and emits silent notifications for incoming and accepted friend requests.
+/// Polls the Minecraft friends list on a periodic cadence and emits silent
+/// notifications for incoming and accepted friend requests.
+///
+/// Monitors friend list changes by comparing snapshots between tick cycles,
+/// sending notifications when new incoming requests or accepted outgoing
+/// requests are detected.
 @MainActor
 public final class MinecraftFriendsFriendListMonitor {
     private let friendsService: MinecraftFriendsService
@@ -22,6 +26,13 @@ public final class MinecraftFriendsFriendListMonitor {
 
     private var isTicking = false
 
+    /// Creates a new friend list monitor.
+    ///
+    /// - Parameters:
+    ///   - friendsService: The service used for API operations.
+    ///   - host: The host providing authentication and notification delivery.
+    ///   - preferencesDidChangeNotification: An optional notification name to observe for preference changes.
+    ///   - localize: A closure that resolves localization keys to strings.
     public init(
         friendsService: MinecraftFriendsService,
         host: any MinecraftFriendsPresenceMonitorHost,
@@ -72,6 +83,10 @@ public final class MinecraftFriendsFriendListMonitor {
         Task { await friendsService.resetFriendListPollingSchedule() }
     }
 
+    /// Executes a single tick of the friend list polling loop.
+    ///
+    /// - Parameter context: The tick context containing the current player ID
+    ///   and service availability flag.
     public func tick(context: MinecraftFriendsFriendListTickContext) async {
         guard !isTicking else { return }
         isTicking = true

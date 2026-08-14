@@ -1,8 +1,18 @@
 import Foundation
 
+/// A localization lookup engine for MinecraftFriendsKit.
+///
+/// Resolves string keys against the package's bundled localization resources,
+/// iterating through locale codes with fallback to `zh-Hans` and `en`.
 public enum MinecraftFriendsKitLocalization {
     private static let missingSentinel = "\u{FFFC}"
 
+    /// Returns the localized string for the given key and locale identifier.
+    ///
+    /// - Parameters:
+    ///   - key: The localization key to look up.
+    ///   - localeIdentifier: The current locale identifier (e.g., `"en"`, `"zh-Hans"`).
+    /// - Returns: The localized string, or the key itself if no translation is found.
     public static func string(forKey key: String, localeIdentifier: String) -> String {
         let bundle = Bundle.module
         for code in localizationLookupCodes(for: localeIdentifier, bundle: bundle) {

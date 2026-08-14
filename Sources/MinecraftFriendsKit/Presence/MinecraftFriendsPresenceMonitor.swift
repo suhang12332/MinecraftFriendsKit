@@ -1,5 +1,11 @@
 import Foundation
 
+/// Monitors friend presence status changes on a periodic tick cycle.
+///
+/// On each tick, this monitor checks the player ID, loads friend list preferences,
+/// polls the presence API if the polling interval has elapsed, compares previous
+/// versus new statuses of each friend, and sends silent notifications when a friend
+/// comes online, goes offline, or has a pending invite.
 @MainActor
 public final class MinecraftFriendsPresenceMonitor {
     private let friendsService: MinecraftFriendsService
@@ -20,6 +26,13 @@ public final class MinecraftFriendsPresenceMonitor {
 
     private var isTicking = false
 
+    /// Creates a new presence monitor.
+    ///
+    /// - Parameters:
+    ///   - friendsService: The service used for API operations.
+    ///   - host: The host providing authentication and notification delivery.
+    ///   - preferencesDidChangeNotification: An optional notification name to observe for preference changes.
+    ///   - localize: A closure that resolves localization keys to strings.
     public init(
         friendsService: MinecraftFriendsService,
         host: any MinecraftFriendsPresenceMonitorHost,
@@ -70,6 +83,10 @@ public final class MinecraftFriendsPresenceMonitor {
         Task { await friendsService.resetPresencePollingSchedule() }
     }
 
+    /// Executes a single tick of the presence monitoring loop.
+    ///
+    /// - Parameter context: The tick context containing the current player ID
+    ///   and service availability flag.
     public func tick(context: MinecraftFriendsPresenceTickContext) async {
         guard !isTicking else { return }
         isTicking = true

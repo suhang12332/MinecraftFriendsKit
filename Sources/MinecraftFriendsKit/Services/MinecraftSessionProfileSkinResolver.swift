@@ -1,10 +1,22 @@
 import Foundation
 import OSLog
 
+/// Resolves a Minecraft player's UUID to a skin texture URL via the Mojang session profile API.
+///
+/// Uses an in-memory `NSCache` to avoid repeated network fetches for the same player.
+/// Parses the base64-encoded textures property from the session profile JSON response
+/// and normalizes HTTP URLs to HTTPS.
 public enum MinecraftSessionProfileSkinResolver {
     private nonisolated(unsafe) static let hitCache = NSCache<NSString, NSString>()
     private static let log = Logger(subsystem: "MinecraftFriendsKit", category: "SessionSkin")
 
+    /// Resolves the skin texture URL for the specified player UUID.
+    ///
+    /// - Parameters:
+    ///   - uuidNoHyphens: The player UUID without hyphens (32 hex characters).
+    ///   - sessionProfileBaseURL: The base URL for the Mojang session profile API.
+    ///   - httpClient: The HTTP client to use for the request.
+    /// - Returns: The skin texture URL string, or `nil` if unavailable.
     public static func resolveTextureURLString(
         uuidNoHyphens: String,
         sessionProfileBaseURL: URL,
@@ -38,6 +50,10 @@ public enum MinecraftSessionProfileSkinResolver {
         }
     }
 
+    /// Extracts the skin texture URL from a Mojang session profile JSON response.
+    ///
+    /// - Parameter data: The raw JSON data from the session profile endpoint.
+    /// - Returns: The skin texture URL string, or `nil` if parsing fails.
     public static func skinTextureURL(fromSessionProfileJSON data: Data) -> String? {
         struct Prop: Codable { let name: String; let value: String }
         struct SessionProfile: Codable { let properties: [Prop]? }
