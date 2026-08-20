@@ -7,24 +7,10 @@ import Foundation
 /// versus new statuses of each friend, and sends silent notifications when a friend
 /// comes online, goes offline, or has a pending invite.
 @MainActor
-public final class MinecraftFriendsPresenceMonitor {
-    private let friendsService: MinecraftFriendsService
-    private let host: any MinecraftFriendsPresenceMonitorHost
-    private let localize: (String) -> String
-    private let preferencesDidChangeNotification: Notification.Name?
-
-    nonisolated(unsafe) private var preferencesObserver: NSObjectProtocol?
-    private var preferencesInvalidationTask: Task<Void, Never>?
-
-    private var trackedPlayerId: String?
-    private var friendListPreferenceLoaded = false
-    private var friendListEnabled = false
-
+public final class MinecraftFriendsPresenceMonitor: MinecraftFriendsMonitor {
     private var presenceNotificationsReady = false
     private var lastStatusByFriendId: [String: MinecraftPresenceWireStatus]?
     private var seenInviteProfileIds = Set<String>()
-
-    private var isTicking = false
 
     /// Creates a new presence monitor.
     ///
@@ -33,54 +19,24 @@ public final class MinecraftFriendsPresenceMonitor {
     ///   - host: The host providing authentication and notification delivery.
     ///   - preferencesDidChangeNotification: An optional notification name to observe for preference changes.
     ///   - localize: A closure that resolves localization keys to strings.
-    public init(
+    public override init(
         friendsService: MinecraftFriendsService,
         host: any MinecraftFriendsPresenceMonitorHost,
         preferencesDidChangeNotification: Notification.Name?,
         localize: @escaping (String) -> String
     ) {
-        self.friendsService = friendsService
-        self.host = host
-        self.preferencesDidChangeNotification = preferencesDidChangeNotification
-        self.localize = localize
-
-        if let preferencesDidChangeNotification {
-            preferencesObserver = NotificationCenter.default.addObserver(
-                forName: preferencesDidChangeNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                Task { @MainActor in
-                    self?.schedulePreferencesInvalidation()
-                }
-            }
-        }
+        super.init(
+            friendsService: friendsService,
+            host: host,
+            preferencesDidChangeNotification: preferencesDidChangeNotification,
+            localize: localize
+        )
     }
 
-    deinit {
-        preferencesInvalidationTask?.cancel()
-        if let preferencesObserver {
-            NotificationCenter.default.removeObserver(preferencesObserver)
-        }
-    }
-
-    private func schedulePreferencesInvalidation() {
-        preferencesInvalidationTask?.cancel()
-        preferencesInvalidationTask = Task {
-            invalidateFriendListPreferencesCache()
-        }
-    }
-
-    private func invalidateFriendListPreferencesCache() {
-        friendListPreferenceLoaded = false
-    }
-
-    private func resetForNewPlayer() {
+    override func resetNotificationState() {
         presenceNotificationsReady = false
         lastStatusByFriendId = nil
         seenInviteProfileIds = []
-        friendListPreferenceLoaded = false
-        Task { await friendsService.resetPresencePollingSchedule() }
     }
 
     /// Executes a single tick of the presence monitoring loop.
@@ -88,32 +44,11 @@ public final class MinecraftFriendsPresenceMonitor {
     /// - Parameter context: The tick context containing the current player ID
     ///   and service availability flag.
     public func tick(context: MinecraftFriendsPresenceTickContext) async {
-        guard !isTicking else { return }
-        isTicking = true
-        defer { isTicking = false }
-
-        let newId = context.playerId
-        if newId != trackedPlayerId {
-            trackedPlayerId = newId
-            resetForNewPlayer()
-        }
-
-        guard let playerId = context.playerId, context.canUseMicrosoftMinecraftServices else { return }
-
-        if !friendListPreferenceLoaded {
-            guard let token = await host.friendsAccessToken(playerId: playerId) else { return }
-            do {
-                let p = try await friendsService.fetchFriendAccountPreferences(accessToken: token)
-                friendListEnabled = (p.friends == .enabled)
-                friendListPreferenceLoaded = true
-            } catch {
-                friendListEnabled = false
-                friendListPreferenceLoaded = true
-                return
-            }
-        }
-
-        guard friendListEnabled else { return }
+        guard let playerId = await beginTick(
+            playerId: context.playerId,
+            canUseMicrosoftMinecraftServices: context.canUseMicrosoftMinecraftServices,
+            resetPollingSchedule: { await self.friendsService.resetPresencePollingSchedule() }
+        ) else { return }
 
         let hasFriends = !(await friendsService.cachedFriendsLists()?.friends.isEmpty ?? true)
         guard await friendsService.shouldRefreshMinecraftPresenceForPolling(
@@ -133,37 +68,21 @@ public final class MinecraftFriendsPresenceMonitor {
         let cachedLists = await friendsService.cachedFriendsLists()
         let nameByProfileId = Self.nameLookup(from: cachedLists)
         let friendProfileIds = MinecraftFriendsPresenceState.friendProfileIds(from: cachedLists)
-        let presenceForFriends = MinecraftFriendsPresenceState.filteredPresence(
-            presenceById,
+        let next = MinecraftFriendsPresenceState.snapshotStatuses(
+            from: presenceById,
             friendProfileIds: friendProfileIds
         )
 
-        if !presenceNotificationsReady {
-            lastStatusByFriendId = MinecraftFriendsPresenceState.snapshotStatuses(
-                from: presenceById,
-                friendProfileIds: friendProfileIds
-            )
+        guard presenceNotificationsReady, let previous = lastStatusByFriendId else {
+            lastStatusByFriendId = next
             seenInviteProfileIds.formIntersection(friendProfileIds)
             presenceNotificationsReady = true
             return
         }
 
-        guard let previous = lastStatusByFriendId else {
-            lastStatusByFriendId = MinecraftFriendsPresenceState.snapshotStatuses(
-                from: presenceById,
-                friendProfileIds: friendProfileIds
-            )
-            return
-        }
-
-        let next = MinecraftFriendsPresenceState.snapshotStatuses(
-            from: presenceById,
-            friendProfileIds: friendProfileIds
-        )
-        defer { lastStatusByFriendId = next }
-
+        lastStatusByFriendId = next
         await notifyPresenceChanges(
-            presenceById: presenceForFriends,
+            presenceById: presenceById,
             nameByProfileId: nameByProfileId,
             previous: previous,
             next: next

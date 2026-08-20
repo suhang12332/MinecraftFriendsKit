@@ -53,9 +53,7 @@ actor MinecraftFriendsCoordinator {
     func shouldRefreshFriendListForPolling(friendListEnabled: Bool) -> Bool {
         guard friendListEnabled else { return false }
         guard let lastFriendListPollAt else { return true }
-        let elapsed = Date().timeIntervalSince(lastFriendListPollAt)
-        return updateFriendList && elapsed >= Self.presenceUpdateInterval
-            || elapsed >= Self.maxPresenceUpdateInterval
+        return isIntervalEligible(updateFlag: updateFriendList, lastPollAt: lastFriendListPollAt)
     }
 
     /// Determines whether presence should be refreshed for polling.
@@ -66,11 +64,14 @@ actor MinecraftFriendsCoordinator {
     /// - Returns: `true` if a refresh is needed based on elapsed time and flags.
     func shouldRefreshPresence(friendListEnabled: Bool, hasFriends: Bool) -> Bool {
         guard friendListEnabled, hasFriends else { return false }
-        let elapsed = Date().timeIntervalSince(lastPresencePostAt)
-        let intervalEligible =
-            updatePresence && elapsed >= Self.presenceUpdateInterval
+        return isIntervalEligible(updateFlag: updatePresence, lastPollAt: lastPresencePostAt)
+    }
+
+    /// Returns whether the polling interval has elapsed or the update flag is set.
+    private func isIntervalEligible(updateFlag: Bool, lastPollAt: Date) -> Bool {
+        let elapsed = Date().timeIntervalSince(lastPollAt)
+        return updateFlag && elapsed >= Self.presenceUpdateInterval
             || elapsed >= Self.maxPresenceUpdateInterval
-        return intervalEligible
     }
 
     private func markPresencePingStarted() {
@@ -106,19 +107,25 @@ actor MinecraftFriendsCoordinator {
         service: MinecraftFriendsService
     ) async throws -> MinecraftFriendsListResponse {
         markFriendListPollStarted()
-        let getResult = try await service.executeGetFriends(accessToken: accessToken, ifNoneMatch: friendsETag)
-        let lists: MinecraftFriendsListResponse
-        if getResult.status == 304 {
-            lists = lastLists ?? .empty
-        } else {
-            lists = getResult.lists
-            lastLists = lists
-            if let e = getResult.etag, !e.isEmpty {
-                friendsETag = e
-            }
-        }
+        let lists = try await resolveFriendsLists(accessToken: accessToken, service: service)
         lastFriendsFetchAt = Date()
         return lists
+    }
+
+    /// Fetches the friends list, honoring conditional requests via the cached ETag.
+    private func resolveFriendsLists(
+        accessToken: String,
+        service: MinecraftFriendsService
+    ) async throws -> MinecraftFriendsListResponse {
+        let getResult = try await service.executeGetFriends(accessToken: accessToken, ifNoneMatch: friendsETag)
+        if getResult.status == 304 {
+            return lastLists ?? .empty
+        }
+        lastLists = getResult.lists
+        if let e = getResult.etag, !e.isEmpty {
+            friendsETag = e
+        }
+        return getResult.lists
     }
 
     /// Updates the cached friends list after a successful PUT friend action.
@@ -203,16 +210,7 @@ actor MinecraftFriendsCoordinator {
            let cached = lastLists {
             lists = cached
         } else {
-            let getResult = try await service.executeGetFriends(accessToken: accessToken, ifNoneMatch: friendsETag)
-            if getResult.status == 304 {
-                lists = lastLists ?? .empty
-            } else {
-                lists = getResult.lists
-                lastLists = lists
-                if let e = getResult.etag, !e.isEmpty {
-                    friendsETag = e
-                }
-            }
+            lists = try await resolveFriendsLists(accessToken: accessToken, service: service)
             lastFriendsFetchAt = Date()
         }
 

@@ -7,24 +7,10 @@ import Foundation
 /// sending notifications when new incoming requests or accepted outgoing
 /// requests are detected.
 @MainActor
-public final class MinecraftFriendsFriendListMonitor {
-    private let friendsService: MinecraftFriendsService
-    private let host: any MinecraftFriendsPresenceMonitorHost
-    private let localize: (String) -> String
-    private let preferencesDidChangeNotification: Notification.Name?
-
-    nonisolated(unsafe) private var preferencesObserver: NSObjectProtocol?
-    private var preferencesInvalidationTask: Task<Void, Never>?
-
-    private var trackedPlayerId: String?
-    private var friendListPreferenceLoaded = false
-    private var friendListEnabled = false
-
+public final class MinecraftFriendsFriendListMonitor: MinecraftFriendsMonitor {
     private var notificationsReady = false
     private var knownIncomingRequestProfileIds = Set<String>()
     private var lastOutgoingRequestProfileIds: Set<String>?
-
-    private var isTicking = false
 
     /// Creates a new friend list monitor.
     ///
@@ -33,54 +19,24 @@ public final class MinecraftFriendsFriendListMonitor {
     ///   - host: The host providing authentication and notification delivery.
     ///   - preferencesDidChangeNotification: An optional notification name to observe for preference changes.
     ///   - localize: A closure that resolves localization keys to strings.
-    public init(
+    public override init(
         friendsService: MinecraftFriendsService,
         host: any MinecraftFriendsPresenceMonitorHost,
         preferencesDidChangeNotification: Notification.Name?,
         localize: @escaping (String) -> String
     ) {
-        self.friendsService = friendsService
-        self.host = host
-        self.preferencesDidChangeNotification = preferencesDidChangeNotification
-        self.localize = localize
-
-        if let preferencesDidChangeNotification {
-            preferencesObserver = NotificationCenter.default.addObserver(
-                forName: preferencesDidChangeNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                Task { @MainActor in
-                    self?.schedulePreferencesInvalidation()
-                }
-            }
-        }
+        super.init(
+            friendsService: friendsService,
+            host: host,
+            preferencesDidChangeNotification: preferencesDidChangeNotification,
+            localize: localize
+        )
     }
 
-    deinit {
-        preferencesInvalidationTask?.cancel()
-        if let preferencesObserver {
-            NotificationCenter.default.removeObserver(preferencesObserver)
-        }
-    }
-
-    private func schedulePreferencesInvalidation() {
-        preferencesInvalidationTask?.cancel()
-        preferencesInvalidationTask = Task {
-            invalidateFriendListPreferencesCache()
-        }
-    }
-
-    private func invalidateFriendListPreferencesCache() {
-        friendListPreferenceLoaded = false
-    }
-
-    private func resetForNewPlayer() {
+    override func resetNotificationState() {
         notificationsReady = false
         knownIncomingRequestProfileIds = []
         lastOutgoingRequestProfileIds = nil
-        friendListPreferenceLoaded = false
-        Task { await friendsService.resetFriendListPollingSchedule() }
     }
 
     /// Executes a single tick of the friend list polling loop.
@@ -88,32 +44,11 @@ public final class MinecraftFriendsFriendListMonitor {
     /// - Parameter context: The tick context containing the current player ID
     ///   and service availability flag.
     public func tick(context: MinecraftFriendsFriendListTickContext) async {
-        guard !isTicking else { return }
-        isTicking = true
-        defer { isTicking = false }
-
-        let newId = context.playerId
-        if newId != trackedPlayerId {
-            trackedPlayerId = newId
-            resetForNewPlayer()
-        }
-
-        guard let playerId = context.playerId, context.canUseMicrosoftMinecraftServices else { return }
-
-        if !friendListPreferenceLoaded {
-            guard let token = await host.friendsAccessToken(playerId: playerId) else { return }
-            do {
-                let p = try await friendsService.fetchFriendAccountPreferences(accessToken: token)
-                friendListEnabled = (p.friends == .enabled)
-                friendListPreferenceLoaded = true
-            } catch {
-                friendListEnabled = false
-                friendListPreferenceLoaded = true
-                return
-            }
-        }
-
-        guard friendListEnabled else { return }
+        guard let playerId = await beginTick(
+            playerId: context.playerId,
+            canUseMicrosoftMinecraftServices: context.canUseMicrosoftMinecraftServices,
+            resetPollingSchedule: { await self.friendsService.resetFriendListPollingSchedule() }
+        ) else { return }
 
         guard await friendsService.shouldRefreshFriendListForPolling(friendListEnabled: friendListEnabled) else {
             return
