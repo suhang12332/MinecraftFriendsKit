@@ -40,6 +40,7 @@ struct MinecraftFriendsSheetChrome<Header: View, BodyContent: View, Footer: View
                         .padding()
                 }
                 .frame(maxHeight: 400)
+                .fixedSize(horizontal: false, vertical: true)
             } else {
                 bodyContent()
                     .padding(.horizontal)
