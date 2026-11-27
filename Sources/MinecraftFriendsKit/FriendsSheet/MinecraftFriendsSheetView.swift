@@ -141,29 +141,24 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
                         .frame(maxWidth: .infinity, minHeight: 120)
                 }
             } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        friendsListSection(
-                            sectionId: "friends",
-                            title: localize("minecraft.friends.section.friends"),
-                            dtos: viewModel.uiData.lists.friends,
-                            rowActions: .confirmed
-                        )
-                        friendsListSection(
-                            sectionId: "incoming",
-                            title: localize("minecraft.friends.section.incoming"),
-                            dtos: viewModel.uiData.lists.incomingRequests,
-                            rowActions: .incoming
-                        )
-                        friendsListSection(
-                            sectionId: "outgoing",
-                            title: localize("minecraft.friends.section.outgoing"),
-                            dtos: viewModel.uiData.lists.outgoingRequests,
-                            rowActions: .outgoing
-                        )
-                    }
-                }
-                .frame(maxWidth: 400)
+                friendsListSection(
+                    sectionId: "friends",
+                    title: localize("minecraft.friends.section.friends"),
+                    dtos: viewModel.uiData.lists.friends,
+                    rowActions: .confirmed
+                )
+                friendsListSection(
+                    sectionId: "incoming",
+                    title: localize("minecraft.friends.section.incoming"),
+                    dtos: viewModel.uiData.lists.incomingRequests,
+                    rowActions: .incoming
+                )
+                friendsListSection(
+                    sectionId: "outgoing",
+                    title: localize("minecraft.friends.section.outgoing"),
+                    dtos: viewModel.uiData.lists.outgoingRequests,
+                    rowActions: .outgoing
+                )
             }
         }
     }
