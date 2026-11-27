@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "أصدقاء Minecraft";
 "minecraft.friends.toolbar.help" = "افتح أصدقاء Minecraft (خدمات Mojang)";
 "minecraft.friends.toolbar.title" = "الأصدقاء";
+"minecraft.friends.settings.enable_friend_list" = "تفعيل قائمة الأصدقاء";
+"minecraft.friends.settings.enable_accept_invites" = "قبول دعوات الصداقة";
+"minecraft.friends.settings.description" = "«تفعيل قائمة الأصدقاء» يتحكم في تحميل وعرض أصدقاء Minecraft وحالة اتصالهم. «قبول دعوات الصداقة» يتحكم في قبول طلبات الصداقة الواردة تلقائيًا. يُحفظ هذان المفتاحان في حساب Microsoft Minecraft الخاص بك ويتم تحميلهما من الشبكة عند فتح هذه الصفحة.";

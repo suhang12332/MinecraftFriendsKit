@@ -56,7 +56,8 @@ struct MinecraftFriendsSheetChrome<Header: View, BodyContent: View, Footer: View
 /// The main SwiftUI view for the Minecraft friends sheet.
 ///
 /// Displays friend lists (confirmed friends, incoming requests, outgoing requests)
-/// with presence indicators, skin previews, and action buttons.
+/// with presence indicators, skin previews, action buttons, and account-level
+/// friend preferences.
 public struct MinecraftFriendsSheetView<Skin: View>: View {
     private let playerId: String
     @ObservedObject private var viewModel: MinecraftFriendsSheetViewModel
@@ -101,6 +102,9 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
             footerBar
         }
         .id(playerId)
+        .task {
+            await viewModel.load(forceRefresh: false)
+        }
         .onDisappear {
             viewModel.clearLoadedData()
         }
@@ -127,11 +131,15 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
     }
 
     @ViewBuilder private var bodyContent: some View {
-        Group {
+        VStack(alignment: .leading, spacing: 16) {
+            preferencesRow
+
             if isEmptyState {
-                Text(localize("minecraft.friends.empty"))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
+                if viewModel.hasLoaded && !viewModel.isLoading {
+                    Text(localize("minecraft.friends.empty"))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 120)
+                }
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -160,12 +168,63 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
         }
     }
 
+    @ViewBuilder private var preferencesRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 16) {
+                Toggle(
+                    isOn: Binding(
+                        get: { viewModel.preferences?.friends == .enabled },
+                        set: { enabled in
+                            Task { await viewModel.setFriendListEnabled(enabled) }
+                        }
+                    )
+                ) {
+                    Text(localize("minecraft.friends.settings.enable_friend_list"))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .toggleStyle(.checkbox)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .disabled(preferencesUnavailable)
+                .allowsHitTesting(!viewModel.isSavingFriendList)
+
+                Toggle(
+                    isOn: Binding(
+                        get: { viewModel.preferences?.acceptInvites == .enabled },
+                        set: { enabled in
+                            Task { await viewModel.setAcceptInvitesEnabled(enabled) }
+                        }
+                    )
+                ) {
+                    Text(localize("minecraft.friends.settings.enable_accept_invites"))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .toggleStyle(.checkbox)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .disabled(preferencesUnavailable)
+                .allowsHitTesting(!viewModel.isSavingAcceptInvites)
+            }
+            Text(localize("minecraft.friends.settings.description"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var preferencesUnavailable: Bool {
+        viewModel.preferences == nil || viewModel.isLoadingPreferences
+    }
+
     private var footerBar: some View {
         HStack {
             Button {
                 Task { await viewModel.load(forceRefresh: true) }
             } label: {
-                Text(localize("minecraft.friends.refresh"))
+                if viewModel.isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Text(localize("minecraft.friends.refresh"))
+                }
             }
             .disabled(viewModel.isLoading)
 

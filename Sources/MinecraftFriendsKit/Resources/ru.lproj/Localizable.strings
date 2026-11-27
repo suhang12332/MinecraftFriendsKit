@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Друзья в Minecraft";
 "minecraft.friends.toolbar.help" = "Открыть друзей Minecraft (сервисы Mojang)";
 "minecraft.friends.toolbar.title" = "Друзья";
+"minecraft.friends.settings.enable_friend_list" = "Включить список друзей";
+"minecraft.friends.settings.enable_accept_invites" = "Принимать приглашения в друзья";
+"minecraft.friends.settings.description" = "«Включить список друзей» определяет, будут ли загружаться и отображаться ваши друзья Minecraft и их статус в сети. «Принимать приглашения в друзья» определяет, будут ли запросы в друзья от других пользователей приниматься автоматически. Оба переключателя хранятся в вашей учётной записи Microsoft Minecraft и загружаются из сети при открытии этой страницы.";

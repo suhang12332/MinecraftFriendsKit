@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft मित्र";
 "minecraft.friends.toolbar.help" = "Minecraft मित्र खोलें (Mojang सेवाएँ)";
 "minecraft.friends.toolbar.title" = "मित्र";
+"minecraft.friends.settings.enable_friend_list" = "मित्र सूची सक्षम करें";
+"minecraft.friends.settings.enable_accept_invites" = "मित्र निमंत्रण स्वीकार करें";
+"minecraft.friends.settings.description" = "“मित्र सूची सक्षम करें” नियंत्रित करता है कि आपके Minecraft मित्र और उनकी ऑनलाइन स्थिति लोड और दिखाई जाएँ या नहीं। “मित्र निमंत्रण स्वीकार करें” नियंत्रित करता है कि दूसरों से आए मित्र अनुरोध स्वचालित रूप से स्वीकार किए जाएँ या नहीं। दोनों स्विच आपके Microsoft Minecraft खाते में सहेजे जाते हैं और यह पृष्ठ खोलने पर नेटवर्क से लोड होते हैं।";

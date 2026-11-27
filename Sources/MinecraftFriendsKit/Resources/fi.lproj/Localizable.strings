@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft-kaverit";
 "minecraft.friends.toolbar.help" = "Avaa Minecraft-kaverit (Mojang-palvelut)";
 "minecraft.friends.toolbar.title" = "Kaverit";
+"minecraft.friends.settings.enable_friend_list" = "Ota kaverilista käyttöön";
+"minecraft.friends.settings.enable_accept_invites" = "Hyväksy kaverikutsut";
+"minecraft.friends.settings.description" = "”Ota kaverilista käyttöön” määrittää, ladataanko ja näytetäänkö Minecraft-kaverisi ja heidän verkkotilansa. ”Hyväksy kaverikutsut” määrittää, hyväksytäänkö muiden lähettämät kaveripyynnöt automaattisesti. Molemmat kytkimet tallennetaan Microsoft Minecraft -tilillesi, ja ne ladataan verkosta, kun avaat tämän sivun.";

@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft-Freunde";
 "minecraft.friends.toolbar.help" = "Minecraft-Freunde öffnen (Mojang-Dienste)";
 "minecraft.friends.toolbar.title" = "Freunde";
+"minecraft.friends.settings.enable_friend_list" = "Freundesliste aktivieren";
+"minecraft.friends.settings.enable_accept_invites" = "Freundeseinladungen annehmen";
+"minecraft.friends.settings.description" = "„Freundesliste aktivieren“ legt fest, ob deine Minecraft-Freunde und ihr Online-Status geladen und angezeigt werden. „Freundeseinladungen annehmen“ legt fest, ob Freundschaftsanfragen anderer automatisch angenommen werden. Beide Schalter werden in deinem Microsoft-Minecraft-Konto gespeichert und beim Öffnen dieser Seite aus dem Netz geladen.";

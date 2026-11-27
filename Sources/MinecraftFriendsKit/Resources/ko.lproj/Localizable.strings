@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft 친구";
 "minecraft.friends.toolbar.help" = "Minecraft 친구 열기 (Mojang 서비스)";
 "minecraft.friends.toolbar.title" = "친구";
+"minecraft.friends.settings.enable_friend_list" = "친구 목록 사용";
+"minecraft.friends.settings.enable_accept_invites" = "친구 초대 수락";
+"minecraft.friends.settings.description" = "‘친구 목록 사용’는 Minecraft 친구와 온라인 상태를 불러와 표시할지 여부를 제어합니다. ‘친구 초대 수락’는 다른 사람이 보낸 친구 요청을 자동으로 수락할지 여부를 제어합니다. 두 스위치는 Microsoft Minecraft 계정에 저장되며, 이 페이지를 열면 네트워크에서 불러옵니다.";

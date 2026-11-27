@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft 好友";
 "minecraft.friends.toolbar.help" = "開啟 Minecraft 好友（Mojang 服務）";
 "minecraft.friends.toolbar.title" = "好友";
+"minecraft.friends.settings.enable_friend_list" = "啟用好友列表";
+"minecraft.friends.settings.enable_accept_invites" = "接受好友邀請";
+"minecraft.friends.settings.description" = "「啟用好友列表」控制是否載入並顯示你的 Minecraft 好友與線上狀態；「接受好友邀請」控制是否自動接受他人送來的好友申請。這兩個開關儲存在 Microsoft Minecraft 帳號端，開啟本頁時會從網路載入最新狀態。";

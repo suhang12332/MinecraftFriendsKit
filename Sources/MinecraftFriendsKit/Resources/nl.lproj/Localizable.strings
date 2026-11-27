@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft-vrienden";
 "minecraft.friends.toolbar.help" = "Minecraft-vrienden openen (Mojang-services)";
 "minecraft.friends.toolbar.title" = "Vrienden";
+"minecraft.friends.settings.enable_friend_list" = "Vriendenlijst inschakelen";
+"minecraft.friends.settings.enable_accept_invites" = "Vriendverzoeken accepteren";
+"minecraft.friends.settings.description" = "‘Vriendenlijst inschakelen’ bepaalt of je Minecraft-vrienden en hun onlinestatus worden geladen en weergegeven. ‘Vriendverzoeken accepteren’ bepaalt of vriendverzoeken van anderen automatisch worden geaccepteerd. Beide schakelaars worden opgeslagen op je Microsoft Minecraft-account en worden van het netwerk geladen wanneer je deze pagina opent.";
