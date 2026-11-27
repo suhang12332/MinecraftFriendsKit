@@ -140,27 +140,37 @@ public struct MinecraftFriendsSheetView<Skin: View>: View {
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, minHeight: 120)
                 }
+            } else if limitBodyScrollHeight {
+                friendListSections
             } else {
-                friendsListSection(
-                    sectionId: "friends",
-                    title: localize("minecraft.friends.section.friends"),
-                    dtos: viewModel.uiData.lists.friends,
-                    rowActions: .confirmed
-                )
-                friendsListSection(
-                    sectionId: "incoming",
-                    title: localize("minecraft.friends.section.incoming"),
-                    dtos: viewModel.uiData.lists.incomingRequests,
-                    rowActions: .incoming
-                )
-                friendsListSection(
-                    sectionId: "outgoing",
-                    title: localize("minecraft.friends.section.outgoing"),
-                    dtos: viewModel.uiData.lists.outgoingRequests,
-                    rowActions: .outgoing
-                )
+                ScrollView {
+                    friendListSections
+                }
+                .frame(maxHeight: 400)
+                .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    @ViewBuilder private var friendListSections: some View {
+        friendsListSection(
+            sectionId: "friends",
+            title: localize("minecraft.friends.section.friends"),
+            dtos: viewModel.uiData.lists.friends,
+            rowActions: .confirmed
+        )
+        friendsListSection(
+            sectionId: "incoming",
+            title: localize("minecraft.friends.section.incoming"),
+            dtos: viewModel.uiData.lists.incomingRequests,
+            rowActions: .incoming
+        )
+        friendsListSection(
+            sectionId: "outgoing",
+            title: localize("minecraft.friends.section.outgoing"),
+            dtos: viewModel.uiData.lists.outgoingRequests,
+            rowActions: .outgoing
+        )
     }
 
     @ViewBuilder private var preferencesRow: some View {
