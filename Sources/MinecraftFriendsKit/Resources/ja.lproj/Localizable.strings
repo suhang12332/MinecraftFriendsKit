@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft フレンド";
 "minecraft.friends.toolbar.help" = "Minecraft フレンドを開く（Mojang サービス）";
 "minecraft.friends.toolbar.title" = "フレンド";
+"minecraft.friends.settings.enable_friend_list" = "フレンドリストを有効にする";
+"minecraft.friends.settings.enable_accept_invites" = "フレンド申請を受け入れる";
+"minecraft.friends.settings.description" = "「フレンドリストを有効にする」は、Minecraftのフレンドとオンライン状態を読み込んで表示するかどうかを制御します。「フレンド申請を受け入れる」は、他のユーザーからのフレンド申請を自動的に受け入れるかどうかを制御します。これらのスイッチはMicrosoftのMinecraftアカウントに保存され、このページを開いたときにネットワークから読み込まれます。";

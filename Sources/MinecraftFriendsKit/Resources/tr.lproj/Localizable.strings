@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft arkadaşları";
 "minecraft.friends.toolbar.help" = "Minecraft arkadaşlarını aç (Mojang hizmetleri)";
 "minecraft.friends.toolbar.title" = "Arkadaşlar";
+"minecraft.friends.settings.enable_friend_list" = "Arkadaş listesini etkinleştir";
+"minecraft.friends.settings.enable_accept_invites" = "Arkadaşlık davetlerini kabul et";
+"minecraft.friends.settings.description" = "“Arkadaş listesini etkinleştir” Minecraft arkadaşlarınızın ve çevrimiçi durumlarının yüklenip gösterileceğini kontrol eder. “Arkadaşlık davetlerini kabul et” başkalarından gelen arkadaşlık isteklerinin otomatik olarak kabul edilip edilmeyeceğini kontrol eder. Bu anahtarlar Microsoft Minecraft hesabınızda saklanır ve bu sayfayı açtığınızda ağdan yüklenir.";

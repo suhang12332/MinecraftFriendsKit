@@ -4,7 +4,8 @@ import Foundation
 /// The view model driving the Minecraft friends sheet.
 ///
 /// Manages friend lists, presence data, skin texture URLs, loading state,
-/// and friend mutation operations (add, accept, decline, revoke, remove).
+/// friend account preferences, and friend mutation operations
+/// (add, accept, decline, revoke, remove).
 @MainActor
 public final class MinecraftFriendsSheetViewModel: ObservableObject {
     /// The current UI data containing friend lists and presence information.
@@ -13,6 +14,16 @@ public final class MinecraftFriendsSheetViewModel: ObservableObject {
     @Published private(set) public var skinTextureURLByUUID: [String: String] = [:]
     /// Whether a data loading operation is in progress.
     @Published private(set) public var isLoading = false
+    /// Whether the initial friend data load has completed.
+    @Published private(set) public var hasLoaded = false
+    /// The friend account preferences, or `nil` if not loaded yet.
+    @Published private(set) public var preferences: MinecraftFriendsPreferencesPayload?
+    /// Whether the friend account preferences are being loaded.
+    @Published private(set) public var isLoadingPreferences = false
+    /// Whether the friend list preference is being saved.
+    @Published private(set) public var isSavingFriendList = false
+    /// Whether the accept invites preference is being saved.
+    @Published private(set) public var isSavingAcceptInvites = false
     /// The text entered in the "Add Friend" text field.
     @Published public var addFriendName: String = ""
 
@@ -45,6 +56,11 @@ public final class MinecraftFriendsSheetViewModel: ObservableObject {
         skinTextureURLByUUID = [:]
         addFriendName = ""
         isLoading = false
+        hasLoaded = false
+        preferences = nil
+        isLoadingPreferences = false
+        isSavingFriendList = false
+        isSavingAcceptInvites = false
     }
 
     /// Loads friend data, optionally forcing a refresh.
@@ -53,9 +69,15 @@ public final class MinecraftFriendsSheetViewModel: ObservableObject {
     public func load(forceRefresh: Bool) async {
         let epoch = contentEpoch
         isLoading = true
-        defer { isLoading = false }
+        defer {
+            isLoading = false
+            hasLoaded = true
+        }
 
         guard let host else { return }
+
+        await loadPreferences()
+        guard !Task.isCancelled else { return }
 
         guard let token = await host.friendsAccessToken(playerId: playerId) else {
             guard epoch == contentEpoch else { return }
@@ -64,10 +86,98 @@ public final class MinecraftFriendsSheetViewModel: ObservableObject {
             return
         }
 
+        guard !Task.isCancelled else { return }
+
         do {
             try await reloadUIData(accessToken: token, forceRefresh: forceRefresh, epoch: epoch, host: host)
         } catch {
+            guard !Task.isCancelled else { return }
             host.reportFriendsError(error)
+        }
+    }
+
+    /// Loads the friend account preferences from the server.
+    public func loadPreferences() async {
+        let epoch = contentEpoch
+        guard let host else { return }
+
+        isLoadingPreferences = true
+        defer { isLoadingPreferences = false }
+
+        guard let token = await host.friendsAccessToken(playerId: playerId) else {
+            guard epoch == contentEpoch else { return }
+            preferences = nil
+            return
+        }
+
+        guard !Task.isCancelled else { return }
+
+        do {
+            let fetched = try await friendsService.fetchFriendAccountPreferences(accessToken: token)
+            guard !Task.isCancelled, epoch == contentEpoch else { return }
+            preferences = fetched
+        } catch {
+            guard !Task.isCancelled else { return }
+            guard epoch == contentEpoch else { return }
+            preferences = nil
+            host.reportFriendsError(error)
+        }
+    }
+
+    /// Enables or disables the friend list on the Minecraft account.
+    ///
+    /// - Parameter enabled: Whether the friend list should be enabled.
+    public func setFriendListEnabled(_ enabled: Bool) async {
+        guard !isSavingFriendList, let current = preferences else { return }
+
+        isSavingFriendList = true
+        defer { isSavingFriendList = false }
+
+        let invitesOn = current.acceptInvites == .enabled
+        preferences = MinecraftFriendsPreferencesPayload(
+            friends: enabled ? .enabled : .disabled,
+            acceptInvites: current.acceptInvites
+        )
+        await persistPreferences(enableFriendlist: enabled, enableFriendInvites: invitesOn)
+    }
+
+    /// Enables or disables accepting friend invites on the Minecraft account.
+    ///
+    /// - Parameter enabled: Whether friend invites should be accepted.
+    public func setAcceptInvitesEnabled(_ enabled: Bool) async {
+        guard !isSavingAcceptInvites, let current = preferences else { return }
+
+        isSavingAcceptInvites = true
+        defer { isSavingAcceptInvites = false }
+
+        let friendsOn = current.friends == .enabled
+        preferences = MinecraftFriendsPreferencesPayload(
+            friends: current.friends,
+            acceptInvites: enabled ? .enabled : .disabled
+        )
+        await persistPreferences(enableFriendlist: friendsOn, enableFriendInvites: enabled)
+    }
+
+    private func persistPreferences(enableFriendlist: Bool, enableFriendInvites: Bool) async {
+        let epoch = contentEpoch
+        guard let host else { return }
+        guard let token = await host.friendsAccessToken(playerId: playerId) else { return }
+        guard !Task.isCancelled else { return }
+
+        do {
+            try await friendsService.updateFriendSettings(
+                accessToken: token,
+                enableFriendlist: enableFriendlist,
+                enableFriendInvites: enableFriendInvites
+            )
+            let fetched = try await friendsService.fetchFriendAccountPreferences(accessToken: token)
+            guard !Task.isCancelled, epoch == contentEpoch else { return }
+            preferences = fetched
+        } catch {
+            guard !Task.isCancelled else { return }
+            guard epoch == contentEpoch else { return }
+            host.reportFriendsError(error)
+            await loadPreferences()
         }
     }
 

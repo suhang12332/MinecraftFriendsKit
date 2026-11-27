@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft-venner";
 "minecraft.friends.toolbar.help" = "Åbn Minecraft-venner (Mojang-tjenester)";
 "minecraft.friends.toolbar.title" = "Venner";
+"minecraft.friends.settings.enable_friend_list" = "Aktivér venneliste";
+"minecraft.friends.settings.enable_accept_invites" = "Accepter venneforespørgsler";
+"minecraft.friends.settings.description" = "»Aktivér venneliste« styrer, om dine Minecraft-venner og deres onlinestatus indlæses og vises. »Accepter venneforespørgsler« styrer, om venneanmodninger fra andre accepteres automatisk. Begge kontakter gemmes på din Microsoft Minecraft-konto og indlæses fra nettet, når du åbner denne side.";

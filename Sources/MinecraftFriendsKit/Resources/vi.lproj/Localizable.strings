@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Bạn bè Minecraft";
 "minecraft.friends.toolbar.help" = "Mở bạn bè Minecraft (dịch vụ Mojang)";
 "minecraft.friends.toolbar.title" = "Bạn bè";
+"minecraft.friends.settings.enable_friend_list" = "Bật danh sách bạn bè";
+"minecraft.friends.settings.enable_accept_invites" = "Chấp nhận lời mời kết bạn";
+"minecraft.friends.settings.description" = "“Bật danh sách bạn bè” quyết định có tải và hiển thị bạn bè Minecraft cùng trạng thái trực tuyến của họ hay không. “Chấp nhận lời mời kết bạn” quyết định có tự động chấp nhận lời mời kết bạn từ người khác hay không. Hai công tắc này được lưu trên tài khoản Microsoft Minecraft của bạn và được tải từ mạng khi bạn mở trang này.";

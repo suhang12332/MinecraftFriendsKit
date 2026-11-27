@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Amici di Minecraft";
 "minecraft.friends.toolbar.help" = "Apri amici Minecraft (servizi Mojang)";
 "minecraft.friends.toolbar.title" = "Amici";
+"minecraft.friends.settings.enable_friend_list" = "Abilita elenco amici";
+"minecraft.friends.settings.enable_accept_invites" = "Accetta inviti di amicizia";
+"minecraft.friends.settings.description" = "«Abilita elenco amici» controlla se i tuoi amici Minecraft e il loro stato online vengono caricati e mostrati. «Accetta inviti di amicizia» controlla se le richieste di amicizia ricevute vengono accettate automaticamente. Entrambe le opzioni sono salvate sul tuo account Microsoft Minecraft e vengono caricate dalla rete quando apri questa pagina.";

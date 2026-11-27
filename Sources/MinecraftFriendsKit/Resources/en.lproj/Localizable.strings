@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Minecraft friends";
 "minecraft.friends.toolbar.help" = "Open Minecraft friends (Mojang services)";
 "minecraft.friends.toolbar.title" = "Friends";
+"minecraft.friends.settings.enable_friend_list" = "Enable friend list";
+"minecraft.friends.settings.enable_accept_invites" = "Accept friend invites";
+"minecraft.friends.settings.description" = "“Enable friend list” controls whether your Minecraft friends and their online status are loaded and displayed. “Accept friend invites” controls whether friend requests from others are accepted automatically. Both switches are stored on your Microsoft Minecraft account and are loaded from the network when you open this page.";

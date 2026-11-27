@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "เพื่อนใน Minecraft";
 "minecraft.friends.toolbar.help" = "เปิดเพื่อน Minecraft (บริการ Mojang)";
 "minecraft.friends.toolbar.title" = "เพื่อน";
+"minecraft.friends.settings.enable_friend_list" = "เปิดใช้รายชื่อเพื่อน";
+"minecraft.friends.settings.enable_accept_invites" = "ยอมรับคำเชิญเป็นเพื่อน";
+"minecraft.friends.settings.description" = "“เปิดใช้รายชื่อเพื่อน” ควบคุมว่าจะโหลดและแสดงเพื่อน Minecraft และสถานะออนไลน์หรือไม่ “ยอมรับคำเชิญเป็นเพื่อน” ควบคุมว่าจะยอมรับคำขอเป็นเพื่อนจากผู้อื่นโดยอัตโนมัติหรือไม่ สวิตช์ทั้งสองถูกเก็บไว้ในบัญชี Microsoft Minecraft ของคุณ และจะโหลดจากเครือข่ายเมื่อคุณเปิดหน้านี้";

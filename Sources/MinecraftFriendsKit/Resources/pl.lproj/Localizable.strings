@@ -28,3 +28,6 @@
 "minecraft.friends.sheet.title" = "Znajomi w Minecraft";
 "minecraft.friends.toolbar.help" = "Otwórz znajomych Minecraft (usługi Mojang)";
 "minecraft.friends.toolbar.title" = "Znajomi";
+"minecraft.friends.settings.enable_friend_list" = "Włącz listę znajomych";
+"minecraft.friends.settings.enable_accept_invites" = "Akceptuj zaproszenia do znajomych";
+"minecraft.friends.settings.description" = "„Włącz listę znajomych” określa, czy Twoi znajomi z Minecraft i ich status online mają być wczytywani i wyświetlani. „Akceptuj zaproszenia do znajomych” określa, czy zaproszenia od innych mają być akceptowane automatycznie. Oba przełączniki są przechowywane na koncie Microsoft Minecraft i wczytywane z sieci po otwarciu tej strony.";
