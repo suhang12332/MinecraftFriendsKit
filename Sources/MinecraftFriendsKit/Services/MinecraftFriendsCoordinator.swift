@@ -29,6 +29,25 @@ actor MinecraftFriendsCoordinator {
         lastLists
     }
 
+    /// Clears cached friend data and cancels in-flight polling requests.
+    func clearCache() {
+        inflightBundle?.cancel()
+        inflightFriendsPoll?.cancel()
+        inflightPresencePoll?.cancel()
+        inflightBundle = nil
+        inflightFriendsPoll = nil
+        inflightPresencePoll = nil
+        friendsETag = nil
+        presenceETag = nil
+        lastLists = nil
+        lastPresenceById = [:]
+        lastFriendsFetchAt = nil
+        lastFriendListPollAt = nil
+        lastPresencePostAt = Date()
+        updatePresence = true
+        updateFriendList = true
+    }
+
     /// Resets the presence polling schedule so the next tick triggers a refresh.
     func resetPresencePollingSchedule() {
         lastPresencePostAt = Date()

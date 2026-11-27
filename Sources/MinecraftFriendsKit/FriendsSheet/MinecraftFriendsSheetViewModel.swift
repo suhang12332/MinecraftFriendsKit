@@ -61,6 +61,9 @@ public final class MinecraftFriendsSheetViewModel: ObservableObject {
         isLoadingPreferences = false
         isSavingFriendList = false
         isSavingAcceptInvites = false
+
+        let service = friendsService
+        Task { await service.clearCache() }
     }
 
     /// Loads friend data, optionally forcing a refresh.

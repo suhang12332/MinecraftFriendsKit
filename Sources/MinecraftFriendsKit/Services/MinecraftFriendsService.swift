@@ -50,6 +50,11 @@ public final class MinecraftFriendsService: @unchecked Sendable {
         await coordinator.cachedLists()
     }
 
+    /// Clears cached friend data and cancels any in-flight friend requests.
+    public func clearCache() async {
+        await coordinator.clearCache()
+    }
+
     func resetPresencePollingSchedule() async {
         await coordinator.resetPresencePollingSchedule()
     }
